@@ -3,6 +3,7 @@ import './App.css';
 import logo from './logo.svg';
 
 import Login from './login/Login.js';
+import Character from './character/Character.js';
 // import Classes from './classes/Classes.js';
 // import Whiteboard from './whiteboard/Whiteboard.js';
 import Survey from './survey/Survey.js';
@@ -18,6 +19,7 @@ function PageRouter() {
     <>
       {page === 'login' && <Login />}
        {page === 'survey' && <Survey />}
+       {page === 'character' && <Character />}
       {/* {page === 'survey' && <Survey />} */}
       {/* {page === 'classes' && <Classes />} */}
     </>

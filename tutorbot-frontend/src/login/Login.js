@@ -28,10 +28,9 @@ function Login() {
         name: 'Jack Gardner',
         Classes: {
           '5th Grade Math': {
-            goals: {
-              area_of_triangle: 'student should be able to find the area of a triangle',
-              area_of_rectangle: 'student should be able to find the area of a rectangle',
-            },
+            goals: 
+            ["student should be able to find the area of a triangle",
+             "student should be able to find the area of a rectangle"],
           },
         },
       });
@@ -64,11 +63,20 @@ function Login() {
       </div>
 
       <div className="right-pane">
+        
+        <div class="scrolling-background">
         <img
           src="/login/backdrop.png"
           alt="Backdrop"
           className="background-image"
         />
+        <img
+          src="/login/backdrop.png"
+          alt="Backdrop"
+          className="background-image"
+        />
+        </div>
+
           <img
             src="/login/slide1.png"
             alt="Banner"

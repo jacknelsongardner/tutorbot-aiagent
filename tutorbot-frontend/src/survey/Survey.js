@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext} from 'react';
 import axios from 'axios';
 import './Survey.css';
 import { PageContext, RoleContext, UserContext } from '../App';
@@ -16,6 +16,12 @@ const nextQuestions = [
 ];
 
 function Survey() {
+
+
+const { page, setPage } = useContext(PageContext);
+const { role, setRole } = useContext(RoleContext);
+const { user, setUser } = useContext(UserContext);
+
   const [showIntro, setShowIntro] = useState(true);
   const [step, setStep] = useState(0);
   const [textAnswers, setTextAnswers] = useState([]);
@@ -82,14 +88,14 @@ function Survey() {
   }
 
   if (finished) {
-    return <div className="fade-slide fade-in">Creating your avatar…</div>;
+    setPage('character');
   }
 
   return (
     <div className="questionnaire-container">
       {showIntro ? (
         <div className={`fade-slide ${fadeClass}`}>
-          <h2>Now let's generate your tutor…</h2>
+          <h2 className="questionText">Now let's generate your tutor…</h2>
         </div>
       ) : sliderQuestions.length === 0 ? (
         <div className={`fade-slide ${fadeClass}`}>
