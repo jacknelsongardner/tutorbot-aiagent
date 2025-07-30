@@ -1,0 +1,117 @@
+.login-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+body, .login-layout {
+  background: #000;
+}
+
+.left-pane {
+  flex: 0.5;
+  background: linear-gradient(to bottom, #333659, #2e284c);
+  color: white;
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.left-pane .title {
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px black;
+}
+
+.role-selection button {
+  margin: 0.5rem;
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: white;
+  color: #4b0082;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.role-selection button:hover {
+  background: #dcd0ff;
+}
+
+.right-pane {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  
+  overflow: hidden;
+}
+
+
+.foreground-image {
+  position: absolute;
+  left: 50%;
+  top: 65%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  max-height: 80%;
+  max-width: 60%;
+  object-fit: contain;
+}
+
+.speech-bubble-image {
+  position: relative; /* Changed from absolute so it can be a container */
+  top: -25%;
+  width: 45%;
+  height: auto;
+  margin: 0 auto;
+  z-index: 1;
+  object-fit: contain;
+  display: block;
+  max-width: 40%;
+}
+
+.speech-bubble-text {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  font-size: 2.5rem;
+  font-family: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif;
+  font-weight: bold;
+  color: #000000;
+  text-shadow: 2px 2px 4px #fff, 1px 1px 2px #000;
+  text-align: center;
+  width: 80%;
+}
+
+
+
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  opacity: 0.6; /* Optional: makes it blend better */
+}
+
+
+.student-button {
+  background: #28ad37;
+  color: white;
+}
+
+.teacher-button {
+  background: #007bff;
+  color: white;
+}
