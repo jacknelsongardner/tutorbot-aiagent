@@ -1,10 +1,19 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useContext } from 'react';
 import { Stage, Layer, Line, Text, Rect } from 'react-konva';
 import './Whiteboard.css';
+import Character from './Character';
+import { PageContext, RoleContext, UserContext } from '../App';
 
 const Whiteboard = () => {
   const [userDrawnLines, setUserDrawnLines] = useState([]);
   const isDrawing = useRef(false);
+
+  const [isTalking, setIsTalking] = useState(true); // Control character talking state
+
+const { page, setPage } = useContext(PageContext);
+const { role, setRole } = useContext(RoleContext);
+const { user, setUser } = useContext(UserContext);
+
 
   const [texts, setTexts] = useState([]);
   const [rects, setRects] = useState([]);
@@ -67,12 +76,19 @@ const [sendText, setSendText] = useState('');
 return (
     <div className="whiteboard-container">
         <div className="sidebar">
-            <h2>Tools</h2>
+            <h2>Jack Gardner</h2>
             {/*<button onClick={() => addText('Hello!', 100, 100)}>Add Text</button>
             <button onClick={() => addRect(150, 150, 100, 60)}>Add Rectangle</button>
             <button onClick={() => addProgrammaticLine(50, 50, 200, 200)}>Add Line</button>*/}
 
-            <button onClick={clearBoard}>Clear Whiteboard</button>
+            
+
+            <Character
+                sprite="./character/generated.png"
+                speechText="Hello there! I am speaking now."
+                isTalking={isTalking}
+            />
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                 <input
                     type="text"
@@ -83,6 +99,9 @@ return (
                 />
                 <button>Send</button>
             </div>
+
+            <button onClick={clearBoard}>Clear Whiteboard</button>
+            <button onClick={() => setPage('login')}>Next</button>
         </div>
 
         <div className="drawing-area">
