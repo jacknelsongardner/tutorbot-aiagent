@@ -55,7 +55,7 @@ function Login() {
     <div className="login-layout">
       <div className="left-pane">
         <h1 className="title">MyTutor.ai</h1>
-        <p className="subtitle">Your personalized, AI-powered learning assistant</p>
+        <p className="subtitle">Your personalized, AI-powered tutor (and friend)</p>
         <div className="role-selection" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <button onClick={() => handleSelectRole('student')}>I'm a Student</button>
           <button onClick={() => handleSelectRole('teacher')}>I'm a Teacher</button>

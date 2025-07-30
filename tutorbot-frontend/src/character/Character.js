@@ -36,7 +36,7 @@ function Character() {
         setImageUrl("character/generated.PNG"); // Assume this is a full URL
         setTimeout(() => {
           setTransitionDone(true);
-          setTimeout(() => setPage("classes"), 4000);
+          setTimeout(() => setPage("whiteboard"), 4000);
         }, 500); // Small delay before transition
       } catch (err) {
         console.error("Character generation failed", err);
