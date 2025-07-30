@@ -4,6 +4,10 @@ from openai import OpenAI
 import os
 from uuid import uuid4
 from dotenv import load_dotenv
+import re
+import json
+
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,6 +19,50 @@ CORS(app)  # ✅ This enables CORS for all routes and all origins
 
 openai_client = OpenAI(api_key="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")
 conversations = {}
+
+
+
+
+
+
+def handle_whiteboard(input_text):
+
+    # Extract the commentary
+    commentary_match = re.search(r'<@(.+?)@>', input_text, re.DOTALL)
+    commentary = commentary_match.group(1).strip() if commentary_match else ""
+
+    # Extract the whiteboard part
+    whiteboard_match = re.search(r'<#(.*?)#>', input_text, re.DOTALL)
+    whiteboard_content = whiteboard_match.group(1).strip() if whiteboard_match else ""
+
+    # Extract individual whiteboard items
+    item_pattern = re.compile(
+        r'\[(\d+)\s+(text|sticker)\s+at\s+\((\d+),\s*(\d+)\)'
+        r'(?:\s+sized\s+\((\d+)\))?:\s+"(.*?)"\]'
+    )
+
+    whiteboard_items = []
+    for match in item_pattern.finditer(whiteboard_content):
+        item_id, item_type, x, y, size, content = match.groups()
+        item = {
+            "id": int(item_id),
+            "type": item_type,
+            "position": [int(x), int(y)],
+            "content": content
+        }
+        if size:
+            item["size"] = int(size)
+        whiteboard_items.append(item)
+
+    # Final result
+    result = {
+        "commentary": commentary,
+        "whiteboard": whiteboard_items
+    }
+
+    return result
+
+
 
 @app.route('/start', methods=['POST'])
 def start_session():
@@ -36,13 +84,9 @@ def start_session():
 
         key = user_name
         if key in conversations:
-            return jsonify({"error": "Session already exists"}), 400
+            del conversations[key]
 
-        # Start with system message
-        messages = [
-            {
-                "role": "system",
-                "content": f'''
+        raw_instruction = f'''
                     You're name is {chatbot_name}, and you are tutoring {student_name}.
                     You are a {tutor_persona}
                     You are a helpful tutor that knows Jack's interests.
@@ -70,18 +114,28 @@ def start_session():
                     [5 sticker at (100, 100): "happy face"]
                     #>
 
+                    /////// EXAMPLE COMMENTARY! NOTE THE <@ @> FORMAT ///////
                     <@
                     See how we lined up the digits and added them?
                     Now you try: 56 [highlight ] + 27. 
                     @>
 
-                    ////// WHITEBOARD EXAMPLE CONTENT END ///////
                     NOTE: Do only one commentary for each message to the student.
                     NOTE: Stick to the whiteboard content format above.
 
-                    Draw something on the whiteboard to start the conversation!
+                    Draw something on the whiteboard to start the conversation! 
+                    And some commentary to the student, asking how they're doing.
 
                 '''
+        
+        processed_instruction = [line.strip() for line in raw_instruction.splitlines() if line.strip()]  # Remove empty lines and strip whitespace
+        processed_prompt = " ".join(processed_instruction)  # Join into a single line with spaces
+         
+        # Start with system message
+        messages = [
+            {
+                "role": "system",
+                "content": processed_prompt
             },
             {"role": "user", "content": f"Hi, I'm {student_name}!"}
         ]
@@ -103,7 +157,9 @@ def start_session():
         # Append the reply to conversations
         conversations[key].append(reply)
         
-        return jsonify({"response": reply_content})
+        reply_json = handle_whiteboard(reply_content)
+
+        return jsonify({"response": reply_json, "response_raw": reply_content})
 
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
