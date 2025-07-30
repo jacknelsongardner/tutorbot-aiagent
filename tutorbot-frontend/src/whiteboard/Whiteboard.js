@@ -1,15 +1,20 @@
-import React, { useRef, useState, useContext } from 'react';
+import React, { useRef, useEffect, useState, useContext } from 'react';
 import { Stage, Layer, Line, Text, Rect } from 'react-konva';
 import './Whiteboard.css';
 import Character from './Character';
 import { PageContext, RoleContext, UserContext } from '../App';
+import axios from 'axios';
 
 const Whiteboard = () => {
   const [userDrawnLines, setUserDrawnLines] = useState([]);
   const isDrawing = useRef(false);
+  
+  const [loading, setLoading] = useState(false);
 
   const [isTalking, setIsTalking] = useState(true); // Control character talking state
+  const [chatResponse, setChatResponse] = useState('');
 
+  
 const { page, setPage } = useContext(PageContext);
 const { role, setRole } = useContext(RoleContext);
 const { user, setUser } = useContext(UserContext);
@@ -20,6 +25,39 @@ const { user, setUser } = useContext(UserContext);
   const [programmaticLines, setProgrammaticLines] = useState([]);
 
   const [currentStroke, setCurrentStroke] = useState(null);
+
+
+    async function startSession(userID) {
+        try {
+            const response = await axios.post('http://localhost:5000/start', {
+            userID: userID
+            });
+
+            // Handle the chatbot response
+            return response.data.response;
+        } catch (error) {
+            console.error('Error starting session:', error);
+            if (error.response && error.response.data?.error) {
+            return `Error: ${error.response.data.error}`;
+            }
+            return 'An unexpected error occurred.';
+        }
+    }
+
+    // Function that starts the session and stores the response
+  const handleStart = async () => {
+    setLoading(true);
+    const userID = 'jack'; // hardcoded or pulled from context/auth
+    const response = await startSession(userID);
+    setChatResponse(response);
+    setLoading(false);
+  };
+
+  // Automatically run on first render
+  useEffect(() => {
+    handleStart();
+  }, []);
+
 
   const handleMouseDown = (e) => {
     isDrawing.current = true;
@@ -85,8 +123,9 @@ return (
 
             <Character
                 sprite="./character/generated.png"
-                speechText="Hello there! I am speaking now."
+                speechText={chatResponse}
                 isTalking={isTalking}
+                isLoading={loading}
             />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
@@ -101,7 +140,7 @@ return (
             </div>
 
             <button onClick={clearBoard}>Clear Whiteboard</button>
-            <button onClick={() => setPage('login')}>Next</button>
+            <button onClick={() => setPage('login')}>Logout</button>
         </div>
 
         <div className="drawing-area">
