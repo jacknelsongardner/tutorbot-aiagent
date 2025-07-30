@@ -14,11 +14,10 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  transition: background 2s ease;
 }
 
 .generation-container.reveal {
-  background: linear-gradient(135deg, #3b0066, #9900cc);
+  background: linear-gradient(135deg, #292446, #362c64);
 }
 
 .character {
@@ -55,7 +54,6 @@ body {
   transform: translate(-50%, -50%);
   animation: spin 20s linear infinite;
   z-index: 1;
-  opacity: 0.5;
 }
 
 @keyframes spin {
