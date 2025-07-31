@@ -26,7 +26,8 @@ function Login() {
       setPage('survey');
       setUser({
         name: 'Jack Gardner',
-        favorites: []
+        favorites: [],
+        tutor: {}
       });
     } else if (role === 'teacher') {
       setPage('classes');

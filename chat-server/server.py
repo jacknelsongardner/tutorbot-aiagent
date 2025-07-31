@@ -216,18 +216,81 @@ def continue_conversation():
     return jsonify({"response": reply_json, "response_raw": reply_content})
 
 
-@app.route('/end', methods=['POST'])
-def end_conversation():
-    data = request.get_json()
-    user_name = data.get("userID")
-    class_id = data.get("classID")
+@app.route('/character', methods=['POST'])
+def create_character():
+    try:
+        # Parse JSON data from request
+        data = request.get_json()
 
-    key = user_name
-    if key in conversations:
-        del conversations[key]
-        return jsonify({"status": "Conversation ended"})
-    else:
-        return jsonify({"error": "No session found"}), 404
+        if not data or "userID" not in data:
+            return jsonify({"error": "Missing userID in request"}), 400
+        
+        user_name = data.get("userID")
+        user_age = data.get("age")
+        user_sex = data.get("sex")
+        favorites = data.get("favorites")
+
+        key = user_name
+        if key in conversations:
+            del conversations[key]
+
+        raw_instruction = f'''
+                    a kid named {user_name} {user_sex} aged {user_age} likes {favorites}, 
+                    create his tutor from these materials (remember only one of each) 
+                    body: bluebody.GIF, greenbody.GIF, whitebody.GIF, pinkbody.GIF 
+                    hat: piratehat.PNG, spacehelmet.PNG, nothing.PNG, wizardhat.PNG
+                    glasses: goggles.PNG, nothing.PNG, eyepatch.PNG, superheromask.PNG
+                    holding: lightsaber.PNG, sword.PNG, wand.PNG, nothing.PNG 
+                    also name the creature you create (your choice)
+                    format of <@|body:choice|hat:choice|glasses:choice|holding:choice@>
+                    and for tutor name format of <#name#>
+                '''
+
+        # Start with system message
+        messages = [
+            {
+                "role": "system",
+                "content": raw_instruction
+            }
+        ]
+        
+        # Send the first message to get a response from OpenAI
+        response = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            temperature=0.3  # Optional: adjust for creativity/consistency
+        )
+
+        
+
+        # Extract the reply content
+        reply_content = response.choices[0].message.content
+
+        # Match the pattern inside <@ ... @>
+        pattern = r"<@(.+?)@>"
+        match = re.search(pattern, reply_content)
+        if not match:
+            raise ValueError("String does not match the expected format.")
+        
+        content = match.group(1)  # e.g. "body:choice|hat:choice|glasses:choice|holding:choice"
+        parts = content.split('|')
+        
+        result = {}
+        for part in parts:
+            if ':' not in part:
+                continue
+            key, value = part.split(':', 1)
+            result[key.strip()] = value.strip()
+
+        pattern = r"<#(.+?)#>"
+        match = re.search(pattern, reply_content)
+        content = match.group(1)
+        result["name"] = content
+             
+        return jsonify({"response": result, "response_raw": reply_content})
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
 @app.route('/active_sessions', methods=['GET'])

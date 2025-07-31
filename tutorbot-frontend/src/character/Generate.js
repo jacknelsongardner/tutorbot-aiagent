@@ -2,7 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import './Character.css';
 import axios from 'axios';
 import { PageContext, RoleContext, UserContext } from '../App';
-
+import Character from '../whiteboard/Character.js'
 
 const phrases = [
   "Generating your character…",
@@ -12,7 +12,7 @@ const phrases = [
   "Making it awesome…",
 ];
 
-function Character() {
+function Generate() {
 
 
     const { page, setPage } = useContext(PageContext);
@@ -32,16 +32,33 @@ function Character() {
 
     const fetchCharacter = async () => {
       try {
-        //const res = await axios.post('http://localhost:3001/generate-character');
-        setImageUrl("character/generated.PNG"); // Assume this is a full URL
+        const data = {	
+          "userID": "jack",
+          "age": 10,
+          "sex": "male",
+          "favorites": user.favorites
+        };
+        
+        const res = await axios.post('http://localhost:5000/character', data);
+        console.log(res.data.response)
+
+        // Properly update user state
+        setUser(prevUser => ({
+          ...prevUser,
+          tutor: res.data.response
+        }));
+
+        console.log(user);
+
         setTimeout(() => {
           setTransitionDone(true);
           setTimeout(() => setPage("whiteboard"), 4000);
-        }, 500); // Small delay before transition
+        }, 500);
       } catch (err) {
         console.error("Character generation failed", err);
       }
     };
+
 
     fetchCharacter();
 
@@ -60,16 +77,15 @@ function Character() {
 
       {transitionDone && (
         <>
-          <img
-            src="/character/shine.PNG"
-            className="sun"
-            alt="Sun"
-          />
-          <img
-            src={imageUrl}
-            className="character"
-            alt="Final Character"
-          />
+          <Character
+            body="/costume/whitebody.GIF'}"      
+            hat={`costume/${user?.tutor?.hat || 'nothing.PNG'}`}         
+            glasses={`costume/${user?.tutor?.glasses || 'nothing.PNG'}`}
+            holding={`costume/${user?.tutor?.holding || 'nothing.PNG'}`}
+            speechText="Welcome, young apprentice!"
+            isTalking={false}
+            isLoading={false}
+            />
         </>
       )}
 
@@ -78,4 +94,4 @@ function Character() {
   );
 }
 
-export default Character;
+export default Generate;

@@ -173,10 +173,13 @@ return (
             <h2>Jack Gardner</h2>
 
             <Character
-                sprite="./character/generated.png"
+                body="costume/bluebody.GIF"      
+                hat={`costume/${user?.tutor?.hat || 'nothing.PNG'}`}         
+                glasses={`costume/${user?.tutor?.glasses || 'nothing.PNG'}`}
+                holding={`costume/${user?.tutor?.holding || 'nothing.PNG'}`}
                 speechText={chatResponse.commentary}
-                isTalking={isTalking}
-                isLoading={loading}
+                isTalking={false}
+                isLoading={false}
             />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
