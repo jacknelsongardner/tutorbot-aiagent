@@ -13,7 +13,16 @@ const Whiteboard = () => {
 
   const [isTalking, setIsTalking] = useState(true); // Control character talking state
   const [chatResponse, setChatResponse] = useState({});
-    
+
+    const userWhiteboardRef = useRef();
+
+
+    const getWhiteboardScreenshot = async () => {
+        return userWhiteboardRef.current.toDataURL({
+            mimeType: 'image/png',
+            pixelRatio: 2,
+        });
+    };
   
 const { page, setPage } = useContext(PageContext);
 const { role, setRole } = useContext(RoleContext);
@@ -51,11 +60,13 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
 
     async function sendMessage(userID, message) {
         try {
+            const screenshot = await getWhiteboardScreenshot();
             const response = await axios.post('http://localhost:5000/message', {
             userID: userID,
             message: message,
             tutor: user.tutor,
-            favorites: user.favorites
+            favorites: user.favorites,
+            image: screenshot
             });
 
             // Handle the chatbot response
@@ -81,8 +92,13 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
   const handleSend = async () => {
     setLoading(true);
     const userID = 'jack'; // hardcoded or pulled from context/auth
+
+    
+
     const response = await sendMessage(userID, sendText);
     setChatResponse(response);
+
+    
 
     console.log(response);
     if (response.whiteboard) {
@@ -94,7 +110,7 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
   };
 
 const handleWhiteboardUpdate = async (content) => {
-    clearBoard(); // Clear existing content
+    clearAiBoard(); // Clear existing content
 
     for (const element of content) {
 
@@ -165,12 +181,16 @@ const handleWhiteboardUpdate = async (content) => {
     setProgrammaticLines((prev) => [...prev, { points: [x1, y1, x2, y2], stroke: 'red', strokeWidth: 2 }]);
   };
 
-  const clearBoard = () => {
-    setUserDrawnLines([]);
+  const clearAiBoard = () => {
     setProgrammaticLines([]);
     setTexts([]);
     setRects([]);
     setCurrentStroke(null);
+  };
+
+  const clearUserBoard = () => {
+    setUserDrawnLines([]);
+    
   };
 
 const [sendText, setSendText] = useState('');
@@ -190,18 +210,18 @@ return (
                 isLoading={false}
             />
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+            <div className="chat-input-container">
                 <input
                     type="text"
                     value={sendText}
                     onChange={e => setSendText(e.target.value)}
                     placeholder="Type your message here..."
-                    style={{ flex: 1 }}
+                    className="chat-input"
                 />
-                <button onClick={handleSend}>Send</button>
+                <button onClick={handleSend} className="chat-send-button">Send</button>
             </div>
 
-            <button onClick={clearBoard}>Clear Whiteboard</button>
+            <button onClick={clearUserBoard}>Clear Whiteboard</button>
             <button onClick={() => setPage('login')}>Logout</button>
         </div>
         <div className="drawing-container">
@@ -236,6 +256,7 @@ return (
             <div className="whiteboard-wrapper">
                 <div className="whiteboard-label">User Whiteboard</div>
                 <Stage
+                    ref={userWhiteboardRef}
                     width={window.innerWidth * 0.4}
                     height={window.innerHeight}
                     onMouseDown={handleMouseDown}

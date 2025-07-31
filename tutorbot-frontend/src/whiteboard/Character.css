@@ -50,8 +50,9 @@
   width: 300px; /* adjust to your image size */
   height: 400px;
   margin: 0;
-  margin-top:-100px;
-  margin-bottom:-80px;
+  margin-top: -50px;
+  margin-bottom: -80px;
+  z-index: 0; /* send it behind other elements with higher z-index */
 }
 
 .character-layer {

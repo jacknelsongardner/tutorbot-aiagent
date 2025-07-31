@@ -10,7 +10,7 @@ import json
 import pytesseract
 from PIL import Image
 import io
-
+import base64
 
 # Load environment variables from .env file
 load_dotenv()
@@ -317,23 +317,32 @@ def start_session():
 def continue_conversation():
 
     student_work = ""
-    if 'screenshot' in request.files:
-        image_file = request.files['image']
-        
+
+    data = request.get_json()
+
+    if 'image' in data:
+        image_data_url = data['image']
+
+        # Extract base64 part from data URL
+        match = re.search(r'base64,(.*)', image_data_url)
+        if not match:
+            return jsonify({'error': 'Invalid base64 image'}), 400
+
+        image_data = base64.b64decode(match.group(1))
+
         try:
-            image = Image.open(image_file.stream)
+            image = Image.open(io.BytesIO(image_data))
             text = pytesseract.image_to_string(image)
-            student_work = jsonify({'text': text.strip()})
+            student_work = text.strip()
         except Exception as e:
             student_work = ""
     
-
-    data = request.get_json()
+    
     user_name = data.get("userID")
     user_favorites = data.get("favorites")
     message = data.get("message")
 
-    message = message, "student whiteboard work: ", student_work 
+    message = f"{message}, student whiteboard work: , {student_work}"
 
     key = user_name
     if key not in conversations:
@@ -385,7 +394,12 @@ def continue_conversation():
     # Append the reply to conversations
     conversations[key].append(reply)
     if problem != {}:
-        system_reply = {"role": "system", "content": f"Here's the problem generated {problem["problem"]} with answer: {problem["answer"]}!"}
+
+        system_reply = {
+            "role": "system",
+            "content": f"Here's the problem generated {problem['problem']} with answer: {problem['answer']}!"
+        }
+
         conversations[key].append(system_reply)
 
     commentary_match = re.search(r'<@(.+?)@>', reply_content, re.DOTALL)
@@ -419,9 +433,9 @@ def create_character():
                     a kid named {user_name} {user_sex} aged {user_age} likes {favorites}, 
                     create his tutor from these materials (remember only one of each) 
                     body: bluebody.GIF, greenbody.GIF, whitebody.GIF, pinkbody.GIF 
-                    hat: piratehat.PNG, spacehelmet.PNG, nothing.PNG, wizardhat.PNG
-                    glasses: goggles.PNG, nothing.PNG, eyepatch.PNG, superheromask.PNG
-                    holding: lightsaber.PNG, sword.PNG, wand.PNG, nothing.PNG 
+                    hat: piratehat.PNG, knighthat.PNG, spacehelmet.PNG, wizardhat.PNG, animalhat.PNG, headphones.PNG, alienantenna.PNG
+                    glasses: robotgoggles.PNG, nothing.PNG, eyepatch.PNG, superheromaskred.PNG, superheromaskblue.PNG, superheromaskblack.PNG, 
+                    holding: lightsaber.PNG, sword.PNG, wizardwand.PNG, knightshield.PNG, spaceblaster.PNG
                     also name the creature you create (your choice)
                     format of <@|body:choice|hat:choice|glasses:choice|holding:choice@>
                     and for tutor name format of <#name:name|persona:description#>
