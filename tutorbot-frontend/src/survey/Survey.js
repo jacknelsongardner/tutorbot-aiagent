@@ -53,7 +53,7 @@ function Survey() {
     setInputValue('');
 
     try {
-      const entitymovie = await searchEntities('movie', updatedAnswers[0], 2);
+      const entitymovie = await searchEntities('movie', updatedAnswers[-1], 2);
         setUser({
           ...user,
           favorites: [...(user.favorites || []), entitymovie[0]],
@@ -68,7 +68,7 @@ function Survey() {
     } else {
       setStep(0);
 
-
+        console.log(user.favorites);
       let possibleMovies = await findRelatedEntities('movie', user.favorites.map(m => m.entity_id), 1990, 2025, 2)
       let possibleVideoGames = await findRelatedEntities('videogame', user.favorites.map(g => g.entity_id), 1990, 2025, 2)
       let possibleTVShows = await findRelatedEntities('tv_show', user.favorites.map(s => s.entity_id), 1990, 2025, 2)

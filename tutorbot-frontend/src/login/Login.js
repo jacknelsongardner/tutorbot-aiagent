@@ -29,22 +29,9 @@ function Login() {
         favorites: [],
         tutor: {}
       });
-    } else if (role === 'teacher') {
-      setPage('classes');
-      setRole('teacher');
-      setUser({
-        name: 'Arnold Fowler',
-        Classes: {
-          '5th Grade Math': {
-            goals: {
-              area_of_circle: 'student should be able to find the area of a triangle',
-              area_of_rectangle: 'student should be able to find the area of a rectangle',
-            },
-          },
-        },
-      });
+    } 
     }
-  };
+  
 
   return (
     <div className="login-layout">
