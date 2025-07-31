@@ -27,9 +27,7 @@ conversations = {}
 
 def handle_whiteboard(input_text):
  # Extract the commentary
-    commentary_match = re.search(r'<@(.+?)@>', input_text, re.DOTALL)
-    commentary = commentary_match.group(1).strip() if commentary_match else ""
-
+    
     # Extract the whiteboard part
     whiteboard_match = re.search(r'<#(.*?)#>', input_text, re.DOTALL)
     whiteboard_content = whiteboard_match.group(1).strip() if whiteboard_match else input_text.strip()
@@ -79,10 +77,147 @@ def handle_whiteboard(input_text):
             "size": [int(width), int(height)]
         })
 
-    return {
-        "commentary": commentary,
-        "whiteboard": whiteboard_items
-    }
+    return whiteboard_items
+    
+
+def generate_whiteboard(problem):
+    
+        raw_instruction = f'''
+
+                    Adhere strictly to the whiteboard content format below, from here on out. 
+                    
+                    ////// EXAMPLE WHITEBOARD CONTENT ///////
+                    <#
+                    [1 text position (150, 100) sized (30): "  23"]
+                    [2 text position (150, 130) sized (30): "+ 45"]
+                    [3 line from (150, 155) to (190, 155) ]
+                    [4 rect at (150, 170) sized (25, 35) ]
+                    #>
+                    Illustrate the problem: {problem}
+                    If drawing shapes, remember to label sides, no text, just numbers
+                '''
+        
+        processed_instruction = [line.strip() for line in raw_instruction.splitlines() if line.strip()]  # Remove empty lines and strip whitespace
+        processed_prompt = " ".join(processed_instruction)  # Join into a single line with spaces
+         
+        # Start with system message
+        messages = [
+            {
+                "role": "system",
+                "content": processed_prompt
+            }
+        ]
+
+        # Send the first message to get a response from OpenAI
+        response = openai_client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=messages,
+            temperature=0.3  # Optional: adjust for creativity/consistency
+        )
+
+        # Extract the reply content
+        reply_content = response.choices[0].message.content
+        reply = {"role": "assistant", "content": reply_content}
+        
+        reply_json = handle_whiteboard(reply_content)
+        return reply_json
+
+        
+
+def generate_problem(next, type, likes, difficulty, special):
+    
+        raw_instruction = f'''
+                    You are going to generate a problem for this tutor to help teach
+                    surround the problem instructions with <# #> brackets e.g. <# simplify, solve, etc #>
+                    surround the problem itself with <@ @> brackets e.g. <@ if mary has 5 apples, etc@>
+                    give the answer to the problem with <! !> e.g. <! 2 square feet !>
+                    remember to write the answer or it won't work!!!!
+                '''
+        
+        processed_instruction = [line.strip() for line in raw_instruction.splitlines() if line.strip()]  # Remove empty lines and strip whitespace
+        processed_prompt = " ".join(processed_instruction)  # Join into a single line with spaces
+         
+        # Start with system message
+        messages = [
+            {
+                "role": "system",
+                "content": processed_prompt
+            },
+            {"role": "user", "content": f"My child needs a problem based on {next}! Make it {type} with {difficulty} themed around one of these {likes}. Special instructions: {special}"}
+        ]
+
+        # Send the first message to get a response from OpenAI
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.3  # Optional: adjust for creativity/consistency
+        )
+
+        # Extract the reply content
+        reply_content = response.choices[0].message.content
+
+        result = {}
+
+        problem = ""
+        instructions = ""
+        answer = ""
+
+        pattern = r"<#(.+?)#>"
+        match = re.search(pattern, reply_content)
+        if not match:
+            pass
+        else: 
+            instructions = match.group(1)  # e.g. "body:choice|hat:choice|glasses:choice|holding:choice"
+        
+        pattern = r"<@(.+?)@>"
+        match = re.search(pattern, reply_content, re.DOTALL)
+        if not match:
+            pass
+        else:
+            problem = match.group(1)  # e.g. "body:choice|hat:choice|glasses:choice|holding:choice"
+       
+
+        pattern = r"<!(.+?)!>"
+        match = re.search(pattern, reply_content, re.DOTALL)
+        if not match:
+            pass
+        else:
+            answer = match.group(1)  # e.g. "body:choice|hat:choice|glasses:choice|holding:choice"
+        
+
+        whiteboard = {}
+        whiteboard = generate_whiteboard(problem)
+        
+        print(instructions)
+        print(problem)
+        
+        result["instructions"] = instructions
+        result["problem"] = problem
+        result["raw"] = reply_content
+        result["whiteboard"] = whiteboard
+        result["answer"] = answer
+
+        return result
+
+@app.route('/generate-problem', methods=['POST'])
+def generate_problem_endpoint():
+    try:
+        data = request.get_json()
+        next_topic = data.get("next")
+        type_level = data.get("type")
+        likes = data.get("likes")
+        difficulty = data.get("difficulty")
+        special = data.get("special")
+
+        if not next_topic or not type_level or not likes:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        result = generate_problem(next_topic, type_level, likes, difficulty, special)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 
@@ -97,20 +232,17 @@ def start_session():
         user_name = data.get("userID")
 
         # Check for student info
-        student_name = "jack"
-        student_likes = "likes pirates and mario bros."
-        learning_goals = "Learn to calculate area and perimeter of rectangles and triangles. Be able to apply these concepts to real world problems (word problems)."
-        learning_status = "Did ok with area and perimeter of rectangles, but struggles with triangles."
-        tutor_persona = "pokemon pirate who loves make learning fun. You also say ARGGH a lot and use pirate slang."
-        chatbot_name = "pokepirate"
+        student_likes = data.get("favorites")
+        tutor_persona = data["tutor"]["name"]
+        chatbot_name = data["tutor"]["description"]
 
         key = user_name
         if key in conversations:
             del conversations[key]
 
         raw_instruction = f'''
-                    You're name is {chatbot_name}, and you are tutoring {student_name}.
-                    You are a {tutor_persona}
+                    You're name is {chatbot_name}, and you are tutoring {user_name}.
+                    You are a {tutor_persona} using the socratic method
                     You are a helpful tutor that knows Jack's interests.
                     Remember to use whiteboard content format for all messages.
                     <@ @> surrounding commentary to the student.
@@ -120,31 +252,24 @@ def start_session():
                     your canvas is 100x100 pixels
 
                     <STUDENT HOBBIES>
+                    
                     {student_likes}. Use for word problems when relevant.
                     
-                    Adhere strictly to the whiteboard content format below, from here on out.
-                    
-                    ////// EXAMPLE WHITEBOARD CONTENT ///////
-                    <#
-                    [1 text position (150, 100) sized (30): "  23"]
-                    [2 text position (150, 130) sized (30): "+ 45"]
-                    [3 line from (150, 155) to (190, 155) ]
-                    [4 rect at (150, 170) sized (25, 35) ]
-                    #>
+                    Adhere strictly to the problem and commentary content format below, from here on out. 
+                    Theme should be based on something in the kids favorites i've shown you
+
+                    ////// EXAMPLE PROBLEM GENERATION ///////
+                    <#problemsubject|problemdifficulty|typeofproblem|specialinstructions#>
 
                     /////// EXAMPLE COMMENTARY! NOTE THE <@ @> FORMAT ///////
                     <@
-                    See how we lined up the digits and added them?
-                    Now you try.
+                    Let's try a fraction problem! Let me know if you need help!
                     @>
 
-                    NOTE: Do only one commentary for each message to the student.
-                    NOTE: Stick to the whiteboard content format above.
-
-                    Draw something on the whiteboard to start the conversation! 
-                    And some commentary to the student, asking how they're doing.
-                    be sure to label shapes sides when drawn
-
+                    NOTE: Mostly just give hints. Keep commentary short, 10-15 words tops
+                    NOTE: Don't construct problems until you've found out what the kid wants to learn
+                    NOTE: Don't repeat the problem to the user, they can already see it
+                    NOTE: always do some commentary, when you make a problem, say you're to help if needed
                 '''
         
         processed_instruction = [line.strip() for line in raw_instruction.splitlines() if line.strip()]  # Remove empty lines and strip whitespace
@@ -156,7 +281,7 @@ def start_session():
                 "role": "system",
                 "content": processed_prompt
             },
-            {"role": "user", "content": f"Hi, I'm {student_name}!"}
+            {"role": "user", "content": f"Hi, I'm {user_name}!"}
         ]
         
         # Store messages in conversations
@@ -164,7 +289,7 @@ def start_session():
 
         # Send the first message to get a response from OpenAI
         response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=messages,
             temperature=0.3  # Optional: adjust for creativity/consistency
         )
@@ -175,8 +300,13 @@ def start_session():
         
         # Append the reply to conversations
         conversations[key].append(reply)
+
+        commentary_match = re.search(r'<@(.+?)@>', reply_content, re.DOTALL)
+        commentary = commentary_match.group(1).strip() if commentary_match else ""
+
+    
         
-        reply_json = handle_whiteboard(reply_content)
+        reply_json = {"commentary": commentary}
 
         return jsonify({"response": reply_json, "response_raw": reply_content})
 
@@ -187,6 +317,7 @@ def start_session():
 def continue_conversation():
     data = request.get_json()
     user_name = data.get("userID")
+    user_favorites = data.get("favorites")
     message = data.get("message")
 
     key = user_name
@@ -199,7 +330,7 @@ def continue_conversation():
 
     # Send the first message to get a response from OpenAI
     response = openai_client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=messages,
         temperature=0.3  # Optional: adjust for creativity/consistency
     )
@@ -208,10 +339,45 @@ def continue_conversation():
     reply_content = response.choices[0].message.content
     reply = {"role": "assistant", "content": reply_content}
     
+    problem = {}
+    problem_list = []
+
+    # Check if <#...#> exists
+    problem_match = re.search(r'<#(.+?)#>', reply_content, re.DOTALL)
+
+    if problem_match:
+        raw_problem = problem_match.group(1).strip()
+        problem_list = raw_problem.split("|")  # <#problemsubject|difficulty|typeofproblem#>
+
+        # Ensure we have at least 4 items in the list, filling in blanks if needed
+        while len(problem_list) < 4:
+            problem_list.append("")
+
+        # Strip each one and default to "" if it's None or empty
+        safe_problem_list = [(p or "").strip() for p in problem_list[:4]]
+
+        # Call the function safely
+        problem = generate_problem(
+            safe_problem_list[0],  # subject
+            safe_problem_list[2],  # type of problem
+            user_favorites,        # likes
+            safe_problem_list[1],  # difficulty (or whatever you intended here)
+            safe_problem_list[3]   # optional 4th element
+        )
+
+
+
     # Append the reply to conversations
     conversations[key].append(reply)
+    if problem != {}:
+        system_reply = {"role": "system", "content": f"Here's the problem generated {problem["problem"]} with answer: {problem["answer"]}!"}
+        conversations[key].append(system_reply)
+
+    commentary_match = re.search(r'<@(.+?)@>', reply_content, re.DOTALL)
+    commentary = commentary_match.group(1).strip() if commentary_match else ""
+
     
-    reply_json = handle_whiteboard(reply_content)
+    reply_json = { "commentary": commentary, "problem": problem, "whiteboard": problem.get("whiteboard", [])}
 
     return jsonify({"response": reply_json, "response_raw": reply_content})
 
@@ -243,7 +409,7 @@ def create_character():
                     holding: lightsaber.PNG, sword.PNG, wand.PNG, nothing.PNG 
                     also name the creature you create (your choice)
                     format of <@|body:choice|hat:choice|glasses:choice|holding:choice@>
-                    and for tutor name format of <#name#>
+                    and for tutor name format of <#name:name|persona:description#>
                 '''
 
         # Start with system message
@@ -256,7 +422,7 @@ def create_character():
         
         # Send the first message to get a response from OpenAI
         response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=messages,
             temperature=0.3  # Optional: adjust for creativity/consistency
         )
@@ -285,7 +451,11 @@ def create_character():
         pattern = r"<#(.+?)#>"
         match = re.search(pattern, reply_content)
         content = match.group(1)
-        result["name"] = content
+        content = content
+        name, description = content.split("|", 1)
+        result["name"] = name.split(":",1)[1]
+        result["description"] = description.split(":",1)[1]
+
              
         return jsonify({"response": result, "response_raw": reply_content})
 

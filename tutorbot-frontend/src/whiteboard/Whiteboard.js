@@ -31,8 +31,12 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
     async function startSession(userID) {
         try {
             const response = await axios.post('http://localhost:5000/start', {
-            userID: userID
+            userID: userID,
+            tutor: user.tutor,
+            favorites: user.favorites
             });
+
+            console.log(response.data);
 
             // Handle the chatbot response
             return response.data.response;
@@ -49,7 +53,9 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
         try {
             const response = await axios.post('http://localhost:5000/message', {
             userID: userID,
-            message: message
+            message: message,
+            tutor: user.tutor,
+            favorites: user.favorites
             });
 
             // Handle the chatbot response
