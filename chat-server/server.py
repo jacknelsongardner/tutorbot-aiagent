@@ -26,41 +26,63 @@ conversations = {}
 
 
 def handle_whiteboard(input_text):
-
-    # Extract the commentary
+ # Extract the commentary
     commentary_match = re.search(r'<@(.+?)@>', input_text, re.DOTALL)
     commentary = commentary_match.group(1).strip() if commentary_match else ""
 
     # Extract the whiteboard part
     whiteboard_match = re.search(r'<#(.*?)#>', input_text, re.DOTALL)
-    whiteboard_content = whiteboard_match.group(1).strip() if whiteboard_match else ""
-
-    # Extract individual whiteboard items
-    item_pattern = re.compile(
-        r'\[(\d+)\s+(text|sticker)\s+at\s+\((\d+),\s*(\d+)\)'
-        r'(?:\s+sized\s+\((\d+)\))?:\s+"(.*?)"\]'
-    )
+    whiteboard_content = whiteboard_match.group(1).strip() if whiteboard_match else input_text.strip()
 
     whiteboard_items = []
-    for match in item_pattern.finditer(whiteboard_content):
-        item_id, item_type, x, y, size, content = match.groups()
-        item = {
-            "id": int(item_id),
-            "type": item_type,
-            "position": [int(x), int(y)],
-            "content": content
-        }
-        if size:
-            item["size"] = int(size)
-        whiteboard_items.append(item)
 
-    # Final result
-    result = {
+    # Pattern for text items
+    text_pattern = re.compile(
+        r'\[(\d+)\s+text\s+position\s+\((\d+),\s*(\d+)\)\s+sized\s+\((\d+)\):\s+"(.*?)"\]'
+    )
+
+    # Pattern for line items
+    line_pattern = re.compile(
+        r'\[(\d+)\s+line\s+from\s+\((\d+),\s*(\d+)\)\s+to\s+\((\d+),\s*(\d+)\)\s*\]'
+    )
+
+    # Pattern for rect items
+    rect_pattern = re.compile(
+        r'\[(\d+)\s+rect\s+at\s+\((\d+),\s*(\d+)\)\s+sized\s+\((\d+),\s*(\d+)\)\s*\]'
+    )
+
+    for match in text_pattern.finditer(whiteboard_content):
+        item_id, x, y, size, text = match.groups()
+        whiteboard_items.append({
+            "id": int(item_id),
+            "type": "text",
+            "position": [int(x), int(y)],
+            "size": int(size),
+            "content": text
+        })
+
+    for match in line_pattern.finditer(whiteboard_content):
+        item_id, x1, y1, x2, y2 = match.groups()
+        whiteboard_items.append({
+            "id": int(item_id),
+            "type": "line",
+            "from": [int(x1), int(y1)],
+            "to": [int(x2), int(y2)]
+        })
+
+    for match in rect_pattern.finditer(whiteboard_content):
+        item_id, x, y, width, height = match.groups()
+        whiteboard_items.append({
+            "id": int(item_id),
+            "type": "rect",
+            "position": [int(x), int(y)],
+            "size": [int(width), int(height)]
+        })
+
+    return {
         "commentary": commentary,
         "whiteboard": whiteboard_items
     }
-
-    return result
 
 
 
@@ -107,11 +129,10 @@ def start_session():
                     
                     ////// EXAMPLE WHITEBOARD CONTENT ///////
                     <#
-                    [1 text at (150, 100) sized (30): "  23"]
-                    [2 text at (150, 130) sized (30): "+ 45"]
-                    [3 line from (150, 155) to (190, 155)]
-                    [4 square at (150, 170) sized (25, 35) : ]
-                    [5 sticker at (100, 100): "happy face"]
+                    [1 text position (150, 100) sized (30): "  23"]
+                    [2 text position (150, 130) sized (30): "+ 45"]
+                    [3 line from (150, 155) to (190, 155) ]
+                    [4 rect at (150, 170) sized (25, 35) ]
                     #>
 
                     /////// EXAMPLE COMMENTARY! NOTE THE <@ @> FORMAT ///////
@@ -178,7 +199,7 @@ def continue_conversation():
     # Add user message
     conversations[key].append({"role": "user", "content": message})
     messages = conversations[key]
-    
+
     # Send the first message to get a response from OpenAI
     response = openai_client.chat.completions.create(
         model="gpt-3.5-turbo",

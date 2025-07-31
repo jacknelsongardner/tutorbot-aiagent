@@ -19,6 +19,7 @@ const { page, setPage } = useContext(PageContext);
 const { role, setRole } = useContext(RoleContext);
 const { user, setUser } = useContext(UserContext);
 
+const [whiteboardContent, setWhiteboardContent] = useState([]);
 
   const [texts, setTexts] = useState([]);
   const [rects, setRects] = useState([]);
@@ -76,15 +77,36 @@ const { user, setUser } = useContext(UserContext);
     const userID = 'jack'; // hardcoded or pulled from context/auth
     const response = await sendMessage(userID, sendText);
     setChatResponse(response);
+
+    console.log(response.whiteboard);
+
+    await handleWhiteboardUpdate(response.whiteboard);
     setLoading(false);
   };
 
-  
+const handleWhiteboardUpdate = async (content) => {
+    for (const element of whiteboardContent) {
+        if (element.type === 'text') {
+            addText(element.content, element.position[0], element.position[1]);
+        }
+        else if (element.type === 'rect') {
+            addRect(element.x, element.y, element.width, element.height);
+        }
+        else if (element.type === 'line') {
+            addProgrammaticLine(element.x1, element.y1, element.x2, element.y2);
+        }
+    };
+};
 
   // Automatically run on first render
   useEffect(() => {
     handleStart();
   }, []);
+
+  useEffect(() => {
+    handleWhiteboardUpdate();
+  }, [whiteboardContent]);
+
 
 
   const handleMouseDown = (e) => {
