@@ -12,8 +12,8 @@ const Whiteboard = () => {
   const [loading, setLoading] = useState(false);
 
   const [isTalking, setIsTalking] = useState(true); // Control character talking state
-  const [chatResponse, setChatResponse] = useState('');
-
+  const [chatResponse, setChatResponse] = useState({});
+    
   
 const { page, setPage } = useContext(PageContext);
 const { role, setRole } = useContext(RoleContext);
@@ -44,6 +44,24 @@ const { user, setUser } = useContext(UserContext);
         }
     }
 
+    async function sendMessage(userID, message) {
+        try {
+            const response = await axios.post('http://localhost:5000/message', {
+            userID: userID,
+            message: message
+            });
+
+            // Handle the chatbot response
+            return response.data.response;
+        } catch (error) {
+            console.error('Error starting session:', error);
+            if (error.response && error.response.data?.error) {
+            return `Error: ${error.response.data.error}`;
+            }
+            return 'An unexpected error occurred.';
+        }
+    }
+
     // Function that starts the session and stores the response
   const handleStart = async () => {
     setLoading(true);
@@ -52,6 +70,16 @@ const { user, setUser } = useContext(UserContext);
     setChatResponse(response);
     setLoading(false);
   };
+
+  const handleSend = async () => {
+    setLoading(true);
+    const userID = 'jack'; // hardcoded or pulled from context/auth
+    const response = await sendMessage(userID, sendText);
+    setChatResponse(response);
+    setLoading(false);
+  };
+
+  
 
   // Automatically run on first render
   useEffect(() => {
@@ -115,15 +143,10 @@ return (
     <div className="whiteboard-container">
         <div className="sidebar">
             <h2>Jack Gardner</h2>
-            {/*<button onClick={() => addText('Hello!', 100, 100)}>Add Text</button>
-            <button onClick={() => addRect(150, 150, 100, 60)}>Add Rectangle</button>
-            <button onClick={() => addProgrammaticLine(50, 50, 200, 200)}>Add Line</button>*/}
-
-            
 
             <Character
                 sprite="./character/generated.png"
-                speechText={chatResponse}
+                speechText={chatResponse.commentary}
                 isTalking={isTalking}
                 isLoading={loading}
             />
@@ -133,10 +156,10 @@ return (
                     type="text"
                     value={sendText}
                     onChange={e => setSendText(e.target.value)}
-                    placeholder="Enter text"
+                    placeholder="Type your message here..."
                     style={{ flex: 1 }}
                 />
-                <button>Send</button>
+                <button onClick={handleSend}>Send</button>
             </div>
 
             <button onClick={clearBoard}>Clear Whiteboard</button>

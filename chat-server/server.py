@@ -177,16 +177,25 @@ def continue_conversation():
 
     # Add user message
     conversations[key].append({"role": "user", "content": message})
-
-    # Query GPT
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=conversations[key]
+    messages = conversations[key]
+    
+    # Send the first message to get a response from OpenAI
+    response = openai_client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        temperature=0.3  # Optional: adjust for creativity/consistency
     )
 
-    reply = response['choices'][0]['message']
+    # Extract the reply content
+    reply_content = response.choices[0].message.content
+    reply = {"role": "assistant", "content": reply_content}
+    
+    # Append the reply to conversations
     conversations[key].append(reply)
-    return jsonify({"response": reply['content']})
+    
+    reply_json = handle_whiteboard(reply_content)
+
+    return jsonify({"response": reply_json, "response_raw": reply_content})
 
 
 @app.route('/end', methods=['POST'])
