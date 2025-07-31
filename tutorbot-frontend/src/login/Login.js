@@ -51,8 +51,7 @@ function Login() {
         <h1 className="title">MyTutor.ai</h1>
         <p className="subtitle">Your personalized, AI-powered tutor (and friend)</p>
         <div className="role-selection" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <button onClick={() => handleSelectRole('student')}>I'm a Student</button>
-          <button onClick={() => handleSelectRole('teacher')}>I'm a Teacher</button>
+          <button onClick={() => handleSelectRole('student')}>Try it out!</button>
         </div>
       </div>
 
@@ -72,7 +71,7 @@ function Login() {
         </div>
 
           <img
-            src="/login/slide1.png"
+            src="/login/slide1.PNG"
             alt="Banner"
             className="foreground-image"
           />

@@ -5,6 +5,13 @@ function LoginPopup({ role, onClose, onSubmit }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+
+ const [firstName, setFirstName] = useState('');
+ const [lastName, setLastName] = useState('');
+ const [age, setAge] = useState();
+ const [grade, setGrade] = useState('');
+ const [country, setCountry] = useState('');
+
   const submitLogin = () => {
     onSubmit(email, password);
     onClose();
@@ -20,21 +27,49 @@ function LoginPopup({ role, onClose, onSubmit }) {
         <h2>{role === 'student' ? 'Student Login' : 'Teacher Login'}</h2>
 
         <input
+          type="text"
+          placeholder="First Name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+        />
+
+        <input
+          type="text"
+          placeholder="Last Name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+        />
+
+        <input
+          type="number"
+          placeholder="Age"
+          value={age}
+          onChange={(e) => setAge(e.target.value)}
+        />
+
+        <input
+          type="text"
+          placeholder="Grade"
+          value={grade}
+          onChange={(e) => setGrade(e.target.value)}
+        />
+
+        <input
+          type="text"
+          placeholder="Country"
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+        />
+
+        <input
           type="email"
           placeholder="School Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
         <div className="popup-buttons">
-          <button onClick={submitLogin}>Login</button>
+          <button onClick={submitLogin}>Start</button>
         </div>
       </div>
     </div>
