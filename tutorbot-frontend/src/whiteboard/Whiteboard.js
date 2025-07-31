@@ -78,22 +78,32 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
     const response = await sendMessage(userID, sendText);
     setChatResponse(response);
 
-    console.log(response.whiteboard);
+    console.log(response);
+    if (response.whiteboard) {
+        
+        await handleWhiteboardUpdate(response.whiteboard);
+    }
 
-    await handleWhiteboardUpdate(response.whiteboard);
     setLoading(false);
   };
 
 const handleWhiteboardUpdate = async (content) => {
-    for (const element of whiteboardContent) {
+    clearBoard(); // Clear existing content
+
+    for (const element of content) {
+
+
         if (element.type === 'text') {
+
+            console.log("drawing text", element);
             addText(element.content, element.position[0], element.position[1]);
         }
         else if (element.type === 'rect') {
-            addRect(element.x, element.y, element.width, element.height);
+            console.log("drawing rect", element);
+            addRect(element.position[0], element.position[1], element.size[0], element.size[1]);
         }
         else if (element.type === 'line') {
-            addProgrammaticLine(element.x1, element.y1, element.x2, element.y2);
+            addProgrammaticLine(element.from[0], element.from[1], element.to[0], element.to[1]);
         }
     };
 };
@@ -102,10 +112,6 @@ const handleWhiteboardUpdate = async (content) => {
   useEffect(() => {
     handleStart();
   }, []);
-
-  useEffect(() => {
-    handleWhiteboardUpdate();
-  }, [whiteboardContent]);
 
 
 
@@ -183,6 +189,8 @@ return (
                 />
                 <button onClick={handleSend}>Send</button>
             </div>
+
+            <button onClick={() => addRect(100, 100, 100, 200)}>Rect</button>
 
             <button onClick={clearBoard}>Clear Whiteboard</button>
             <button onClick={() => setPage('login')}>Logout</button>

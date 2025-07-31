@@ -115,12 +115,9 @@ def start_session():
                     Remember to use whiteboard content format for all messages.
                     <@ @> surrounding commentary to the student.
                     <# #> surrounding whiteboard content.
-                    
-                    <STUDENT GOALS>
-                    {learning_goals}
-                    
-                    <STUDENT PROGRESS>
-                    {learning_status}   
+
+                    make sure to label the width and height of rectangles, when relevant.
+                    your canvas is 100x100 pixels
 
                     <STUDENT HOBBIES>
                     {student_likes}. Use for word problems when relevant.
@@ -138,7 +135,7 @@ def start_session():
                     /////// EXAMPLE COMMENTARY! NOTE THE <@ @> FORMAT ///////
                     <@
                     See how we lined up the digits and added them?
-                    Now you try: 56 [highlight ] + 27. 
+                    Now you try.
                     @>
 
                     NOTE: Do only one commentary for each message to the student.
@@ -146,6 +143,7 @@ def start_session():
 
                     Draw something on the whiteboard to start the conversation! 
                     And some commentary to the student, asking how they're doing.
+                    be sure to label shapes sides when drawn
 
                 '''
         
@@ -184,7 +182,6 @@ def start_session():
 
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-
 
 @app.route('/message', methods=['POST'])
 def continue_conversation():

@@ -26,13 +26,7 @@ function Login() {
       setPage('survey');
       setUser({
         name: 'Jack Gardner',
-        Classes: {
-          '5th Grade Math': {
-            goals: 
-            ["student should be able to find the area of a triangle",
-             "student should be able to find the area of a rectangle"],
-          },
-        },
+        favorites: []
       });
     } else if (role === 'teacher') {
       setPage('classes');

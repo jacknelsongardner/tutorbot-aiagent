@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useContext} from 'react';
-import axios from 'axios';
+import React, { useEffect, useState, useContext } from 'react';
 import './Survey.css';
 import { PageContext, RoleContext, UserContext } from '../App';
+
+import { findRelatedEntities, searchEntities } from '../qloo';
 
 const initialQuestions = [
   "What's your favorite movie?",
@@ -9,87 +10,118 @@ const initialQuestions = [
   "What's your favorite video game?",
 ];
 
-const nextQuestions = [
-  "How much do you like zelda?",
-  "How much do you like star wars?",
-  "How much do you like harry potter?",
-];
+const likeQuestions = [];
+
+var possibleFavorites = [];
+
 
 function Survey() {
-
-
-const { page, setPage } = useContext(PageContext);
-const { role, setRole } = useContext(RoleContext);
-const { user, setUser } = useContext(UserContext);
+  const { setPage } = useContext(PageContext);
+  const { setRole } = useContext(RoleContext);
+  const { user, setUser } = useContext(UserContext);
 
   const [showIntro, setShowIntro] = useState(true);
   const [step, setStep] = useState(0);
   const [textAnswers, setTextAnswers] = useState([]);
-  const [sliderQuestions, setSliderQuestions] = useState([]);
-  const [sliderAnswers, setSliderAnswers] = useState({});
+  const [likeAnswers, setLikeAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [finished, setFinished] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [fadeClass, setFadeClass] = useState('fade-in');
 
+  // Utility delay function to replace setTimeout with async/await
+  const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
   useEffect(() => {
-    // Auto-fade-out intro after 2 seconds
     if (showIntro) {
-      setTimeout(() => {
+      (async () => {
+        await delay(2000);
         setFadeClass('fade-out');
-        setTimeout(() => {
-          setShowIntro(false);
-          setFadeClass('fade-in');
-        }, 1000);
-      }, 2000);
+        await delay(1000);
+        setShowIntro(false);
+        setFadeClass('fade-in');
+      })();
     }
   }, [showIntro]);
 
   const handleTextSubmit = async () => {
     setFadeClass('fade-out');
-    setTimeout(async () => {
-      const updatedAnswers = [...textAnswers, inputValue];
-      setTextAnswers(updatedAnswers);
-      setInputValue('');
+    await delay(300); // Wait for fade out animation
 
-      if (step < initialQuestions.length - 1) {
-        setStep(prev => prev + 1);
-        setFadeClass('fade-in');
-      } else {
-        setIsSubmitting(true);
-        try {
-          const res = nextQuestions; // simulate fetch
-          setSliderQuestions(nextQuestions);
-          setStep(0);
-        } catch (err) {
-          console.error("Failed to get slider questions", err);
-        } finally {
-          setIsSubmitting(false);
-          setFadeClass('fade-in');
-        }
-      }
-    }, 300); // match CSS duration
+    const updatedAnswers = [...textAnswers, inputValue];
+    setTextAnswers(updatedAnswers);
+    setInputValue('');
+
+    try {
+      const entitymovie = await searchEntities('movie', updatedAnswers[0], 2);
+        setUser({
+          ...user,
+          favorites: [...(user.favorites || []), entitymovie[0]],
+        });
+    } catch (err) {
+      console.error('Failed to search entities:', err);
+    }
+
+    if (step < initialQuestions.length - 1) {
+      setStep(step + 1);
+      setFadeClass('fade-in');
+    } else {
+      setStep(0);
+
+
+      let possibleMovies = await findRelatedEntities('movie', user.favorites.map(m => m.entity_id), 1990, 2025, 2)
+      let possibleVideoGames = await findRelatedEntities('videogame', user.favorites.map(g => g.entity_id), 1990, 2025, 2)
+      let possibleTVShows = await findRelatedEntities('tv_show', user.favorites.map(s => s.entity_id), 1990, 2025, 2)
+
+
+        console.log(user.favorites);
+
+        likeQuestions.length = 0;
+        possibleMovies.forEach(movie => likeQuestions.push(`Do you like the movie "${movie.name}"?`));
+        possibleTVShows.forEach(show => likeQuestions.push(`Do you like the TV show "${show.name}"?`));
+        possibleVideoGames.forEach(game => likeQuestions.push(`Do you like the video game "${game.name}"?`));
+
+        possibleMovies.forEach(movie => possibleFavorites.push(movie));
+        possibleTVShows.forEach(show => possibleFavorites.push(show));
+        possibleVideoGames.forEach(game => possibleFavorites.push(game));
+
+
+      setFadeClass('fade-in');
+    }
   };
 
-  const handleSliderSubmit = () => {
+  const handleLikeSubmit = async (answer) => {
     setFadeClass('fade-out');
-    setTimeout(() => {
-      if (step < sliderQuestions.length - 1) {
-        setStep(prev => prev + 1);
-        setFadeClass('fade-in');
-      } else {
-        setFinished(true);
-      }
-    }, 300);
+    await delay(300); // wait fade out
+
+    const currentQuestion = likeQuestions[step];
+    const updatedAnswers = {
+      ...likeAnswers,
+      [currentQuestion]: answer,
+    };
+    setLikeAnswers(updatedAnswers);
+
+    if (step < likeQuestions.length - 1) {
+
+        if (answer === "yes") {
+            setUser({
+            ...user,
+            favorites: [...(user.favorites || []), possibleFavorites[step]],
+            });
+        }
+        
+      setStep(step + 1);
+      setFadeClass('fade-in');
+    } else {
+      setFinished(true);
+    }
   };
 
-  if (isSubmitting) {
-    return <div className="fade-slide fade-in">Loading next questions...</div>;
-  }
-
-  if (finished) {
-    setPage('character');
-  }
+  useEffect(() => {
+    if (finished) {
+      setPage('character');
+    }
+  }, [finished, setPage]);
 
   return (
     <div className="questionnaire-container">
@@ -97,9 +129,9 @@ const { user, setUser } = useContext(UserContext);
         <div className={`fade-slide ${fadeClass}`}>
           <h2 className="questionText">Now let's generate your tutor…</h2>
         </div>
-      ) : sliderQuestions.length === 0 ? (
+      ) : textAnswers.length < initialQuestions.length ? (
         <div className={`fade-slide ${fadeClass}`}>
-          <h2>{initialQuestions[step]}</h2>
+          <h2>{initialQuestions[textAnswers.length]}</h2>
           <input
             type="text"
             value={inputValue}
@@ -112,21 +144,11 @@ const { user, setUser } = useContext(UserContext);
         </div>
       ) : (
         <div className={`fade-slide ${fadeClass}`}>
-          <h2>{sliderQuestions[step]}</h2>
-          <input
-            type="range"
-            min="0"
-            max="10"
-            value={sliderAnswers[sliderQuestions[step]] || 5}
-            onChange={e =>
-              setSliderAnswers({
-                ...sliderAnswers,
-                [sliderQuestions[step]]: parseInt(e.target.value),
-              })
-            }
-          />
-          <p>{sliderAnswers[sliderQuestions[step]] || 5}</p>
-          <button onClick={handleSliderSubmit}>Next</button>
+          <h2>{likeQuestions[step]}</h2>
+          <div className="button-group">
+            <button onClick={() => handleLikeSubmit("yes")}>Yes</button>
+            <button onClick={() => handleLikeSubmit("no")}>No</button>
+          </div>
         </div>
       )}
     </div>
