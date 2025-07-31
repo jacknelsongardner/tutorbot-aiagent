@@ -102,14 +102,16 @@ const handleWhiteboardUpdate = async (content) => {
         if (element.type === 'text') {
 
             console.log("drawing text", element);
-            addText(element.content, element.position[0], element.position[1]);
+            addText(element.content, element.position[0]*3, element.position[1]*3);
         }
+        /*
         else if (element.type === 'rect') {
             console.log("drawing rect", element);
-            addRect(element.position[0], element.position[1], element.size[0], element.size[1]);
+            addRect(element.position[0], element.position[1], element.size[0]*3, element.size[1]*3);
         }
+        */
         else if (element.type === 'line') {
-            addProgrammaticLine(element.from[0], element.from[1], element.to[0], element.to[1]);
+            addProgrammaticLine(element.from[0]*3, element.from[1]*3, element.to[0]*3, element.to[1]*3);
         }
     };
 };
@@ -176,7 +178,7 @@ const [sendText, setSendText] = useState('');
 return (
     <div className="whiteboard-container">
         <div className="sidebar">
-            <h2>Jack Gardner</h2>
+            {/*<h2>Jack Gardner</h2>*/}
 
             <Character
                 body="costume/bluebody.GIF"      
@@ -199,40 +201,59 @@ return (
                 <button onClick={handleSend}>Send</button>
             </div>
 
-            <button onClick={() => addRect(100, 100, 100, 200)}>Rect</button>
-
             <button onClick={clearBoard}>Clear Whiteboard</button>
             <button onClick={() => setPage('login')}>Logout</button>
         </div>
+        <div className="drawing-container">
+            <div className="whiteboard-wrapper">
+                <div className="whiteboard-label">AI Whiteboard</div>
+                <Stage
+                    width={window.innerWidth * 0.4}
+                    height={window.innerHeight}
+                    onMouseDown={handleMouseDown}
+                    onMousemove={handleMouseMove}
+                    onMouseup={handleMouseUp}
+                    onTouchStart={handleMouseDown}
+                    onTouchMove={handleMouseMove}
+                    onTouchEnd={handleMouseUp}
+                >
+                    <Layer>
+                        {programmaticLines.map((line, i) => (
+                            <Line key={`prog-${i}`} {...line} />
+                        ))}
+                        {texts.map((text, i) => (
+                            <Text key={`text-${i}`} {...text} />
+                        ))}
+                        {rects.map((rect, i) => (
+                            <Rect key={`rect-${i}`} {...rect} />
+                        ))}
+                    </Layer>
+                </Stage>
+            </div>
 
-        <div className="drawing-area">
-            <Stage
-                width={window.innerWidth * 0.8}
-                height={window.innerHeight}
-                onMouseDown={handleMouseDown}
-                onMousemove={handleMouseMove}
-                onMouseup={handleMouseUp}
-                onTouchStart={handleMouseDown}
-                onTouchMove={handleMouseMove}
-                onTouchEnd={handleMouseUp}
-            >
-                <Layer>
-                    {userDrawnLines.map((line, i) => (
-                        <Line key={`user-${i}`} {...line} />
-                    ))}
-                    {currentStroke && <Line {...currentStroke} />}
-                    {programmaticLines.map((line, i) => (
-                        <Line key={`prog-${i}`} {...line} />
-                    ))}
-                    {texts.map((text, i) => (
-                        <Text key={`text-${i}`} {...text} />
-                    ))}
-                    {rects.map((rect, i) => (
-                        <Rect key={`rect-${i}`} {...rect} />
-                    ))}
-                </Layer>
-            </Stage>
-        </div>
+            <div className="divider" />
+
+            <div className="whiteboard-wrapper">
+                <div className="whiteboard-label">User Whiteboard</div>
+                <Stage
+                    width={window.innerWidth * 0.4}
+                    height={window.innerHeight}
+                    onMouseDown={handleMouseDown}
+                    onMousemove={handleMouseMove}
+                    onMouseup={handleMouseUp}
+                    onTouchStart={handleMouseDown}
+                    onTouchMove={handleMouseMove}
+                    onTouchEnd={handleMouseUp}
+                >
+                    <Layer>
+                        {userDrawnLines.map((line, i) => (
+                            <Line key={`user-${i}`} {...line} />
+                        ))}
+                        {currentStroke && <Line {...currentStroke} />}
+                    </Layer>
+                </Stage>
+            </div>
+        </div>`
     </div>
 );
 };

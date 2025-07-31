@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 import re
 import json
 
+import pytesseract
+from PIL import Image
+import io
 
 
 # Load environment variables from .env file
@@ -19,11 +22,6 @@ CORS(app)  # ✅ This enables CORS for all routes and all origins
 
 openai_client = OpenAI(api_key="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")
 conversations = {}
-
-
-
-
-
 
 def handle_whiteboard(input_text):
  # Extract the commentary
@@ -83,20 +81,22 @@ def handle_whiteboard(input_text):
 def generate_whiteboard(problem):
     
         raw_instruction = f'''
-
+                    You are writing problems on a board for a tutor. the whiteboard will be seen by human child.
                     Adhere strictly to the whiteboard content format below, from here on out. 
-                    
+                    whiteboard is 100x100
                     ////// EXAMPLE WHITEBOARD CONTENT ///////
                     <#
-                    [1 text position (150, 100) sized (30): "  23"]
-                    [2 text position (150, 130) sized (30): "+ 45"]
-                    [3 line from (150, 155) to (190, 155) ]
-                    [4 rect at (150, 170) sized (25, 35) ]
+                    [1 text position (150, 130) sized (30): "45"]
+                    [2 line from (150, 155) to (190, 155) ]
+                    
                     #>
                     Illustrate the problem: {problem}
                     If drawing shapes, remember to label sides, no text, just numbers
+                    don't give away answer to problem in the whiteboard ok?
+                    but give clear instructions to the child
+                    
                 '''
-        
+        #[3 rect at (150, 170) sized (25, 35) ]
         processed_instruction = [line.strip() for line in raw_instruction.splitlines() if line.strip()]  # Remove empty lines and strip whitespace
         processed_prompt = " ".join(processed_instruction)  # Join into a single line with spaces
          
@@ -315,10 +315,25 @@ def start_session():
 
 @app.route('/message', methods=['POST'])
 def continue_conversation():
+
+    student_work = ""
+    if 'screenshot' in request.files:
+        image_file = request.files['image']
+        
+        try:
+            image = Image.open(image_file.stream)
+            text = pytesseract.image_to_string(image)
+            student_work = jsonify({'text': text.strip()})
+        except Exception as e:
+            student_work = ""
+    
+
     data = request.get_json()
     user_name = data.get("userID")
     user_favorites = data.get("favorites")
     message = data.get("message")
+
+    message = message, "student whiteboard work: ", student_work 
 
     key = user_name
     if key not in conversations:
