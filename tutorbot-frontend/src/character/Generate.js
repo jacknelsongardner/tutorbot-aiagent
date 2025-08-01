@@ -67,7 +67,7 @@ function Generate() {
     <div className={`generation-container`}>
       
         <img
-          src="character/shadow.webp"
+          src="/character/shadow.webp"
           className="character fade-loop"
           alt="Generating Character"
         />

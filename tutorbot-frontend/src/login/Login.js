@@ -36,7 +36,7 @@ function Login() {
   return (
     <div className="login-layout">
       <div className="left-pane">
-        <img src="login/logo.png" style={{maxWidth:"65%"}}></img>
+        <img src="/login/logo.png" style={{maxWidth:"65%"}}></img>
         <p className="subtitle">Your personalized, AI-powered tutor (and friend)</p>
         <div className="role-selection" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <button onClick={() => handleSelectRole('student')}>Try it out!</button>
@@ -49,12 +49,12 @@ function Login() {
         <img
           src="/login/backdrop.jpg"
           alt="Backdrop"
-          className="background-image"
+          className="/background-image"
         />
         <img
           src="/login/backdrop.jpg"
           alt="Backdrop"
-          className="background-image"
+          className="/background-image"
         />
         </div>
 
@@ -66,7 +66,7 @@ function Login() {
 
           <div className="speech-bubble-image">
             <h2 className="speech-bubble-text">{bubbleText}</h2>
-            <img src="login/bubble.png" alt="Speech Bubble" style={{ width: '100%', height: 'auto' }} />
+            <img src="/login/bubble.png" alt="Speech Bubble" style={{ width: '100%', height: 'auto' }} />
           </div>
         </div>
 
