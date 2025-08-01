@@ -59,7 +59,7 @@ function Login() {
         </div>
 
           <img
-            src="/login/slide1.PNG"
+            src="/login/slide1.webp"
             alt="Banner"
             className="foreground-image"
           />
