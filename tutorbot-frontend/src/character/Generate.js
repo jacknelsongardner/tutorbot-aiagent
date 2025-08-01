@@ -48,11 +48,9 @@ function Generate() {
           tutor: res.data.response
         }));
 
-        console.log(user);
-
         setTimeout(() => {
           setTransitionDone(true);
-          setTimeout(() => setPage("whiteboard"), 4000);
+          setTimeout(() => setPage("whiteboard"), 3000);
         }, 500);
       } catch (err) {
         console.error("Character generation failed", err);
@@ -66,28 +64,15 @@ function Generate() {
   }, [phraseIndex]);
 
   return (
-    <div className={`generation-container ${transitionDone ? 'reveal' : ''}`}>
-      {!transitionDone && (
+    <div className={`generation-container`}>
+      
         <img
           src="/character/shadow.PNG"
           className="character fade-loop"
           alt="Generating Character"
         />
-      )}
+      
 
-      {transitionDone && (
-        <>
-          <Character
-            body="/costume/whitebody.GIF'}"      
-            hat={`costume/${user?.tutor?.hat || 'nothing.PNG'}`}         
-            glasses={`costume/${user?.tutor?.glasses || 'nothing.PNG'}`}
-            holding={`costume/${user?.tutor?.holding || 'nothing.PNG'}`}
-            speechText="Welcome, young apprentice!"
-            isTalking={false}
-            isLoading={false}
-            />
-        </>
-      )}
 
       <div className="caption">{currentPhrase}</div>
     </div>

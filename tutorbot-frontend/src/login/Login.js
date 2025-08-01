@@ -45,7 +45,7 @@ function Login() {
 
       <div className="right-pane">
         
-        <div class="scrolling-background">
+        <div className="scrolling-background">
         <img
           src="/login/backdrop.png"
           alt="Backdrop"
@@ -68,9 +68,6 @@ function Login() {
             <h2 className="speech-bubble-text">{bubbleText}</h2>
             <img src="login/bubble.png" alt="Speech Bubble" style={{ width: '100%', height: 'auto' }} />
           </div>
-
-          
-        
         </div>
 
       {showPopup && (

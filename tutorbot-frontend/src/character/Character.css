@@ -4,12 +4,11 @@ body {
   font-family: sans-serif;
 }
 
-button {
-  background: #4b0082;
-}
 
 
 .generation-container {
+      background: radial-gradient(circle at center, #1f001f 0%, #000000 100%);
+
   background-color: black;
   height: 100vh;
   width: 100vw;

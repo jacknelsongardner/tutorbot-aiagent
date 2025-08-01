@@ -94,6 +94,9 @@ def generate_whiteboard(problem):
                     If drawing shapes, remember to label sides, no text, just numbers
                     don't give away answer to problem in the whiteboard ok?
                     but give clear instructions to the child
+
+                    Be sure to write the problem on the board as well.
+                    
                     
                 '''
         #[3 rect at (150, 170) sized (25, 35) ]
@@ -132,6 +135,8 @@ def generate_problem(next, type, likes, difficulty, special):
                     surround the problem itself with <@ @> brackets e.g. <@ if mary has 5 apples, etc@>
                     give the answer to the problem with <! !> e.g. <! 2 square feet !>
                     remember to write the answer or it won't work!!!!
+
+                    WARNING : KEEP AWAY FROM COPYRIGHTED CONTENT
                 '''
         
         processed_instruction = [line.strip() for line in raw_instruction.splitlines() if line.strip()]  # Remove empty lines and strip whitespace
@@ -148,7 +153,7 @@ def generate_problem(next, type, likes, difficulty, special):
 
         # Send the first message to get a response from OpenAI
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1-mini",
             messages=messages,
             temperature=0.3  # Optional: adjust for creativity/consistency
         )
@@ -266,10 +271,19 @@ def start_session():
                     Let's try a fraction problem! Let me know if you need help!
                     @>
 
+                    IMPORTANT: don't generate another problem until the kid asks you to OR 
+                    they get the previous problem right, and you've asked all questions you want
+
+                    NOTE: After they get one right, ask before creating another problem
                     NOTE: Mostly just give hints. Keep commentary short, 10-15 words tops
                     NOTE: Don't construct problems until you've found out what the kid wants to learn
                     NOTE: Don't repeat the problem to the user, they can already see it
                     NOTE: always do some commentary, when you make a problem, say you're to help if needed
+
+                    If you need to make another problem, write !CLEAR! somewhere in your response to clear whiteboard
+                    otherwise, you won't be able to write to it. 
+
+                    DON'T EVER WRITE TWO PROBLEMS ON SAME BOARD! DON'T CLEAR UNTIL THE KID SAYS YES TO DOING ANOTHER
                 '''
         
         processed_instruction = [line.strip() for line in raw_instruction.splitlines() if line.strip()]  # Remove empty lines and strip whitespace
@@ -289,7 +303,7 @@ def start_session():
 
         # Send the first message to get a response from OpenAI
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1-mini",
             messages=messages,
             temperature=0.3  # Optional: adjust for creativity/consistency
         )
@@ -321,6 +335,7 @@ def continue_conversation():
     data = request.get_json()
 
     if 'image' in data:
+        print("image in data")
         image_data_url = data['image']
 
         # Extract base64 part from data URL
@@ -336,7 +351,8 @@ def continue_conversation():
             student_work = text.strip()
         except Exception as e:
             student_work = ""
-    
+
+    print(student_work)
     
     user_name = data.get("userID")
     user_favorites = data.get("favorites")
@@ -354,7 +370,7 @@ def continue_conversation():
 
     # Send the first message to get a response from OpenAI
     response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4.1-mini",
         messages=messages,
         temperature=0.3  # Optional: adjust for creativity/consistency
     )
@@ -363,6 +379,13 @@ def continue_conversation():
     reply_content = response.choices[0].message.content
     reply = {"role": "assistant", "content": reply_content}
     
+    clear = False
+
+    pattern = r"!CLEAR!"
+    match = re.search(pattern, reply_content, re.DOTALL)
+    if match:
+        clear = True
+
     problem = {}
     problem_list = []
 
@@ -406,7 +429,7 @@ def continue_conversation():
     commentary = commentary_match.group(1).strip() if commentary_match else ""
 
     
-    reply_json = { "commentary": commentary, "problem": problem, "whiteboard": problem.get("whiteboard", [])}
+    reply_json = { "commentary": commentary, "clear": clear, "problem": problem, "whiteboard": problem.get("whiteboard", [])}
 
     return jsonify({"response": reply_json, "response_raw": reply_content})
 
@@ -434,11 +457,14 @@ def create_character():
                     create his tutor from these materials (remember only one of each) 
                     body: bluebody.GIF, greenbody.GIF, whitebody.GIF, pinkbody.GIF 
                     hat: piratehat.PNG, knighthat.PNG, spacehelmet.PNG, wizardhat.PNG, animalhat.PNG, headphones.PNG, alienantenna.PNG
-                    glasses: robotgoggles.PNG, nothing.PNG, eyepatch.PNG, superheromaskred.PNG, superheromaskblue.PNG, superheromaskblack.PNG, 
+                    glasses: alieneye.PNG, robotgoggles.PNG, eyepatch.PNG, superheromaskred.PNG, superheromaskblue.PNG, superheromaskblack.PNG, 
                     holding: lightsaber.PNG, sword.PNG, wizardwand.PNG, knightshield.PNG, spaceblaster.PNG
                     also name the creature you create (your choice)
                     format of <@|body:choice|hat:choice|glasses:choice|holding:choice@>
                     and for tutor name format of <#name:name|persona:description#>
+
+                    WARNING : KEEP AWAY FROM COPYRIGHTED CONTENT
+                    Keep it generic or make any world-building stuff up
                 '''
 
         # Start with system message
@@ -451,7 +477,7 @@ def create_character():
         
         # Send the first message to get a response from OpenAI
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1-mini",
             messages=messages,
             temperature=0.3  # Optional: adjust for creativity/consistency
         )

@@ -4,11 +4,19 @@ import './Whiteboard.css';
 import Character from './Character';
 import { PageContext, RoleContext, UserContext } from '../App';
 import axios from 'axios';
+import Popup from "./Popup.js"
 
 const Whiteboard = () => {
   const [userDrawnLines, setUserDrawnLines] = useState([]);
   const isDrawing = useRef(false);
   
+  const [showPopup, setShowPopup] = useState(true);
+
+  const closePop = () => {
+    setShowPopup(false);
+
+  };
+
   const [loading, setLoading] = useState(false);
 
   const [isTalking, setIsTalking] = useState(true); // Control character talking state
@@ -98,7 +106,14 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
     const response = await sendMessage(userID, sendText);
     setChatResponse(response);
 
-    
+    setSendText("");
+    if (response.clear)
+    {
+      if (response.clear == true)
+      {
+        clearAiBoard();
+      }
+    }
 
     console.log(response);
     if (response.whiteboard) {
@@ -110,7 +125,6 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
   };
 
 const handleWhiteboardUpdate = async (content) => {
-    clearAiBoard(); // Clear existing content
 
     for (const element of content) {
 
@@ -120,12 +134,6 @@ const handleWhiteboardUpdate = async (content) => {
             console.log("drawing text", element);
             addText(element.content, element.position[0]*3, element.position[1]*3);
         }
-        /*
-        else if (element.type === 'rect') {
-            console.log("drawing rect", element);
-            addRect(element.position[0], element.position[1], element.size[0]*3, element.size[1]*3);
-        }
-        */
         else if (element.type === 'line') {
             addProgrammaticLine(element.from[0]*3, element.from[1]*3, element.to[0]*3, element.to[1]*3);
         }
@@ -197,6 +205,13 @@ const [sendText, setSendText] = useState('');
 
 return (
     <div className="whiteboard-container">
+        {showPopup && (
+          <Popup
+            user={user}
+            onClose={() => closePop()}
+          />
+        )}
+        
         <div className="sidebar">
             {/*<h2>Jack Gardner</h2>*/}
 
@@ -207,7 +222,7 @@ return (
                 holding={`costume/${user?.tutor?.holding || 'nothing.PNG'}`}
                 speechText={chatResponse.commentary}
                 isTalking={false}
-                isLoading={false}
+                isLoading={loading}
             />
 
             <div className="chat-input-container">
@@ -227,6 +242,12 @@ return (
         <div className="drawing-container">
             <div className="whiteboard-wrapper">
                 <div className="whiteboard-label">AI Whiteboard</div>
+                {loading && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <img src="character/loading.gif" alt="Loading Tutorbot" className="speech-bubble" />
+                  </div>
+                )}
+                
                 <Stage
                     width={window.innerWidth * 0.4}
                     height={window.innerHeight}
@@ -237,6 +258,8 @@ return (
                     onTouchMove={handleMouseMove}
                     onTouchEnd={handleMouseUp}
                 >
+
+
                     <Layer>
                         {programmaticLines.map((line, i) => (
                             <Line key={`prog-${i}`} {...line} />
@@ -248,6 +271,7 @@ return (
                             <Rect key={`rect-${i}`} {...rect} />
                         ))}
                     </Layer>
+
                 </Stage>
             </div>
 

@@ -1,14 +1,29 @@
 import React from 'react';
 import './Character.css';
 
-const Character = ({ body, hat, glasses, holding, speechText, isTalking, isLoading }) => {
+const Character = ({
+  body,
+  hat,
+  glasses,
+  holding,
+  speechText="",
+  isTalking,
+  isLoading,
+  showSpeechBubble = true, // default to true
+}) => {
   return (
     <div className="character-container">
       <div className="speech-bubble-wrapper">
-        {!isLoading && (
+          {!isLoading && showSpeechBubble && (
           <>
             <img src="login/bubble.png" alt="Speech Bubble" className="speech-bubble" />
             <p className="speech-text">{speechText}</p>
+          </>
+        )}
+        {isLoading && showSpeechBubble && (
+          <>
+            <img src="login/bubble.png" alt="Speech Bubble" className="speech-bubble" />
+            <p className="speech-text">Loading...</p>
           </>
         )}
       </div>
@@ -28,9 +43,7 @@ const Character = ({ body, hat, glasses, holding, speechText, isTalking, isLoadi
         )}
 
         {/* Loading animation */}
-        {isLoading && (
-          <img src="character/loading.gif" alt="Loading Tutorbot" className="speech-bubble" />
-        )}
+        
       </div>
     </div>
   );

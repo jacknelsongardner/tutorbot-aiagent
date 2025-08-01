@@ -1,4 +1,8 @@
+
+
 .questionnaire-container {
+    background: radial-gradient(circle at center, #1f001f 0%, #000000 100%);
+
   display: flex;
   justify-content: center;
   align-items: center;

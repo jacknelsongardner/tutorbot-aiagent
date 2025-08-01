@@ -43,52 +43,72 @@ function Survey() {
       })();
     }
   }, [showIntro]);
+const handleTextSubmit = async () => {
+  setFadeClass('fade-out');
+  await delay(300); // Wait for fade out animation
 
-  const handleTextSubmit = async () => {
-    setFadeClass('fade-out');
-    await delay(300); // Wait for fade out animation
+  const updatedAnswers = [...textAnswers, inputValue];
+  const currentStep = step; // capture before incrementing
+  const currentAnswer = inputValue;
+  setTextAnswers(updatedAnswers);
+  setInputValue('');
 
-    const updatedAnswers = [...textAnswers, inputValue];
-    setTextAnswers(updatedAnswers);
-    setInputValue('');
+  // Determine the entity type based on the step index
+  const entityTypes = ['movie', 'tv_show', 'videogame'];
+  const entityType = entityTypes[currentStep];
 
+  try {
+    const entityResults = await searchEntities(entityType, currentAnswer, 2);
+    if (entityResults.length > 0) {
+      setUser(prevUser => ({
+        ...prevUser,
+        favorites: [...(prevUser.favorites || []), entityResults[0]],
+      }));
+    }
+  } catch (err) {
+    console.error('Failed to search entities:', err);
+  }
+
+  if (currentStep < initialQuestions.length - 1) {
+    setStep(currentStep + 1);
+    setFadeClass('fade-in');
+  } else {
+    setStep(0);
+    // Wait until favorites are fully updated
+    await delay(300); // helps ensure setUser completes before accessing
+
+    const favoritesCopy = [...(user.favorites || [])];
+    const entityIds = favoritesCopy.map(f => f.entity_id);
+
+    let [possibleMovies, possibleVideoGames, possibleTVShows] = [[], [], []];
     try {
-      const entitymovie = await searchEntities('movie', updatedAnswers[-1], 2);
-        setUser({
-          ...user,
-          favorites: [...(user.favorites || []), entitymovie[0]],
-        });
+      possibleMovies = await findRelatedEntities('movie', entityIds, 1990, 2025, 2);
+      possibleVideoGames = await findRelatedEntities('videogame', entityIds, 1990, 2025, 2);
+      possibleTVShows = await findRelatedEntities('tv_show', entityIds, 1990, 2025, 2);
     } catch (err) {
-      console.error('Failed to search entities:', err);
+      console.error('Failed to fetch related entities:', err);
     }
 
-    if (step < initialQuestions.length - 1) {
-      setStep(step + 1);
-      setFadeClass('fade-in');
-    } else {
-      setStep(0);
+    likeQuestions.length = 0;
+    possibleFavorites.length = 0;
 
-        console.log(user.favorites);
-      let possibleMovies = await findRelatedEntities('movie', user.favorites.map(m => m.entity_id), 1990, 2025, 2)
-      let possibleVideoGames = await findRelatedEntities('videogame', user.favorites.map(g => g.entity_id), 1990, 2025, 2)
-      let possibleTVShows = await findRelatedEntities('tv_show', user.favorites.map(s => s.entity_id), 1990, 2025, 2)
+    possibleMovies.forEach(movie => {
+      likeQuestions.push(`Do you like the movie "${movie.name}"?`);
+      possibleFavorites.push(movie);
+    });
+    possibleTVShows.forEach(show => {
+      likeQuestions.push(`Do you like the TV show "${show.name}"?`);
+      possibleFavorites.push(show);
+    });
+    possibleVideoGames.forEach(game => {
+      likeQuestions.push(`Do you like the video game "${game.name}"?`);
+      possibleFavorites.push(game);
+    });
 
+    setFadeClass('fade-in');
+  }
+};
 
-        console.log(user.favorites);
-
-        likeQuestions.length = 0;
-        possibleMovies.forEach(movie => likeQuestions.push(`Do you like the movie "${movie.name}"?`));
-        possibleTVShows.forEach(show => likeQuestions.push(`Do you like the TV show "${show.name}"?`));
-        possibleVideoGames.forEach(game => likeQuestions.push(`Do you like the video game "${game.name}"?`));
-
-        possibleMovies.forEach(movie => possibleFavorites.push(movie));
-        possibleTVShows.forEach(show => possibleFavorites.push(show));
-        possibleVideoGames.forEach(game => possibleFavorites.push(game));
-
-
-      setFadeClass('fade-in');
-    }
-  };
 
   const handleLikeSubmit = async (answer) => {
     setFadeClass('fade-out');
@@ -127,7 +147,7 @@ function Survey() {
     <div className="questionnaire-container">
       {showIntro ? (
         <div className={`fade-slide ${fadeClass}`}>
-          <h2 className="questionText">Now let's generate your tutor…</h2>
+          <h2 className="questionText">Now let's generate your tutor based on your interests…</h2>
         </div>
       ) : textAnswers.length < initialQuestions.length ? (
         <div className={`fade-slide ${fadeClass}`}>
