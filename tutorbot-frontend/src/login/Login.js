@@ -47,12 +47,12 @@ function Login() {
         
         <div className="scrolling-background">
         <img
-          src="/login/backdrop.png"
+          src="/login/backdrop.jpg"
           alt="Backdrop"
           className="background-image"
         />
         <img
-          src="/login/backdrop.png"
+          src="/login/backdrop.jpg"
           alt="Backdrop"
           className="background-image"
         />
