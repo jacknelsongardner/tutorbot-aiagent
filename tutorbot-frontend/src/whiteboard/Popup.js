@@ -16,7 +16,7 @@ const Popup = ({ user, onClose }) => {
           <div className="popup-header" style={{ marginBottom: "40px" }}>Meet {user.tutor.name}</div>
 
           <div className="spinning-sun">
-            <img src="sun.webp" alt="Spinning Sun" />
+            <img src="character/sun.webp" alt="Spinning Sun" />
           </div>
 
           <div className="character-wrapper">
