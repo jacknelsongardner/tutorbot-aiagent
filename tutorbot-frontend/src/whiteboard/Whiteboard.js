@@ -47,7 +47,7 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
 
     async function startSession(userID) {
         try {
-            const response = await axios.post('http://localhost:5000/start', {
+            const response = await axios.post('http://mytutorai.duckdns.org:5000/start', {
             userID: userID,
             tutor: user.tutor,
             favorites: user.favorites
@@ -69,7 +69,7 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
     async function sendMessage(userID, message) {
         try {
             const screenshot = await getWhiteboardScreenshot();
-            const response = await axios.post('http://localhost:5000/message', {
+            const response = await axios.post('http://mytutorai.duckdns.org:5000/message', {
             userID: userID,
             message: message,
             tutor: user.tutor,

@@ -65,7 +65,6 @@ function LoginPopup({ role, onClose, onSubmit }) {
           onChange={(e) => setCountry(e.target.value)}
         />
 
-
         <div className="popup-buttons">
           <button
             onClick={submitLogin}
