@@ -91,7 +91,7 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
     // Function that starts the session and stores the response
   const handleStart = async () => {
     setLoading(true);
-    const userID = 'jack'; // hardcoded or pulled from context/auth
+    const userID = 'bud'; // hardcoded or pulled from context/auth
     const response = await startSession(userID);
     setChatResponse(response);
     setLoading(false);
@@ -99,7 +99,7 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
 
   const handleSend = async () => {
     setLoading(true);
-    const userID = 'jack'; // hardcoded or pulled from context/auth
+    const userID = 'bud'; // hardcoded or pulled from context/auth
 
     const response = await sendMessage(userID, sendText);
     setChatResponse(response);
