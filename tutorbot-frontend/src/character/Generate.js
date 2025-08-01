@@ -5,10 +5,9 @@ import { PageContext, RoleContext, UserContext } from '../App';
 import Character from '../whiteboard/Character.js'
 
 const phrases = [
-  "Generating your character…",
-  "Picking favorite colors…",
+  "Generating your tutor…",
+  "Picking a personality…",
   "Drawing hair… maybe…",
-  "Giving it personality…",
   "Making it awesome…",
 ];
 
@@ -33,7 +32,7 @@ function Generate() {
     const fetchCharacter = async () => {
       try {
         const data = {	
-          "userID": "jack",
+          "userID": "bud",
           "age": 10,
           "sex": "male",
           "favorites": user.favorites
@@ -67,12 +66,10 @@ function Generate() {
     <div className={`generation-container`}>
       
         <img
-          src="/character/shadow.webp"
+          src="character/shadow.webp"
           className="character fade-loop"
           alt="Generating Character"
         />
-      
-
 
       <div className="caption">{currentPhrase}</div>
     </div>
