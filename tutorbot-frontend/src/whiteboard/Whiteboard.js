@@ -127,10 +127,10 @@ const handleWhiteboardUpdate = async (content) => {
     for (const element of content) {
         if (element.type === 'text') {
             console.log("drawing text", element);
-            addText(element.content, element.position[0]*3, element.position[1]*3);
+            addText(element.content, element.position[0]*6, element.position[1]*3);
         }
         else if (element.type === 'line') {
-            addProgrammaticLine(element.from[0]*3, element.from[1]*3, element.to[0]*3, element.to[1]*3);
+            addProgrammaticLine(element.from[0]*6, element.from[1]*3, element.to[0]*6, element.to[1]*3);
         }
     };
 };
@@ -232,7 +232,7 @@ return (
             </div>
 
             <button onClick={clearUserBoard}>Clear Whiteboard</button>
-            <button onClick={() => setPage('login')}>Start Over</button>
+            <button onClick={() => setPage('survey')}>Start Over</button>
         </div>
         <div className="drawing-container">
             <div className="whiteboard-wrapper">
