@@ -36,7 +36,7 @@ function Login() {
   return (
     <div className="login-layout">
       <div className="left-pane">
-        <h1 className="title">MyTutor.ai</h1>
+        <img src="login/logo.png" style={{maxWidth:"65%"}}></img>
         <p className="subtitle">Your personalized, AI-powered tutor (and friend)</p>
         <div className="role-selection" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <button onClick={() => handleSelectRole('student')}>Try it out!</button>

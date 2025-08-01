@@ -13,7 +13,6 @@ function LoginPopup({ role, onClose, onSubmit }) {
 
   const allFieldsFilled =
     firstName.trim() &&
-    lastName.trim() &&
     age &&
     grade.trim() &&
     country.trim()
@@ -39,17 +38,10 @@ function LoginPopup({ role, onClose, onSubmit }) {
 
         <input
           type="text"
-          placeholder="First Name"
+          placeholder="Username"
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           style={{ marginTop: '100px' }}
-        />
-
-        <input
-          type="text"
-          placeholder="Last Name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
         />
 
         <input
