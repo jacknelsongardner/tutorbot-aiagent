@@ -7,21 +7,30 @@ from dotenv import load_dotenv
 import re
 import json
 
+from find import search_entities, find_entities
+
 import pytesseract
 from PIL import Image
 import io
 import base64
 
+
 # Load environment variables from .env file
 load_dotenv()
-print("OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
+
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # ✅ This enables CORS for all routes and all origins
 
 openai_client = OpenAI(api_key="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")
+
+            
 conversations = {}
+favorites = {}
+
+
+
 
 def handle_whiteboard(input_text):
  # Extract the commentary
@@ -241,6 +250,9 @@ def start_session():
         tutor_persona = data["tutor"]["name"]
         chatbot_name = data["tutor"]["description"]
 
+        favorites[user_name] = student_likes
+        print(student_likes)
+
         key = user_name
         if key in conversations:
             del conversations[key]
@@ -263,16 +275,25 @@ def start_session():
                     Adhere strictly to the problem and commentary content format below, from here on out. 
                     Theme should be based on something in the kids favorites i've shown you
 
-                    ////// EXAMPLE PROBLEM GENERATION ///////
-                    <#problemsubject|problemdifficulty|typeofproblem|specialinstructions#>
-
+                    
                     /////// EXAMPLE COMMENTARY! NOTE THE <@ @> FORMAT ///////
                     <@
-                    Let's try a fraction problem! Let me know if you need help!
+                    Let's try a perimeter problem! Let me know if you need help!
                     @>
+                    ////// EXAMPLE WHITEBOARD GENERATION ///////
 
-                    IMPORTANT: don't generate another problem until the kid asks you to OR 
-                    they get the previous problem right, and you've asked all questions you want
+                    <#
+                    [1 text position (150, 130) sized (30): "find the perimeter of the shape"]
+                    [2 line from (150, 155) to (190, 155)]   // top edge
+                    [3 line from (190, 155) to (190, 195)]   // right edge
+                    [4 line from (190, 195) to (150, 195)]   // bottom edge
+                    [5 line from (150, 195) to (150, 155)]   // left edge
+                    [1 text position (150, 100) sized (30): "width 10"]
+                    [1 text position (150, 120) sized (30): "height 15"]
+                    #>
+
+                    IMPORTANT: don't generate another problem until the kid asks you
+                    ask before messing with the whiteboard at all
 
                     NOTE: After they get one right, ask before creating another problem
                     NOTE: Mostly just give hints. Keep commentary short, 10-15 words tops
@@ -280,10 +301,15 @@ def start_session():
                     NOTE: Don't repeat the problem to the user, they can already see it
                     NOTE: always do some commentary, when you make a problem, say you're to help if needed
 
-                    If you need to make another problem, write !CLEAR! somewhere in your response to clear whiteboard
-                    otherwise, you won't be able to write to it. 
+                    Any time you write to the whiteboard, the whiteboard will clear itself.
+                    If you don't write to it with the <##>, it will keep whatever you wrote
 
                     DON'T EVER WRITE TWO PROBLEMS ON SAME BOARD! DON'T CLEAR UNTIL THE KID SAYS YES TO DOING ANOTHER
+
+                    if kid gets it right, write <#    #> and congradulate them before moving on to the next one
+                    when they get problem completely solved, post a <WIN> element
+                    if they tell you about something they like, write in your next response <- thing|type| -> brackets e.g. <+catsanddogs+>
+                    LIMIT : type can be tv_show, movie, or videogame, nothing else
                 '''
         
         processed_instruction = [line.strip() for line in raw_instruction.splitlines() if line.strip()]  # Remove empty lines and strip whitespace
@@ -318,8 +344,6 @@ def start_session():
         commentary_match = re.search(r'<@(.+?)@>', reply_content, re.DOTALL)
         commentary = commentary_match.group(1).strip() if commentary_match else ""
 
-    
-        
         reply_json = {"commentary": commentary}
 
         return jsonify({"response": reply_json, "response_raw": reply_content})
@@ -381,55 +405,37 @@ def continue_conversation():
     
     clear = False
 
-    pattern = r"!CLEAR!"
+    pattern = r"<#(.+?)#>"
     match = re.search(pattern, reply_content, re.DOTALL)
     if match:
         clear = True
 
-    problem = {}
-    problem_list = []
+    whiteboard = handle_whiteboard(reply_content)
 
-    # Check if <#...#> exists
-    problem_match = re.search(r'<#(.+?)#>', reply_content, re.DOTALL)
+    favorites_match = re.search(r'<-(.+?)->', reply_content, re.DOTALL)
+    favorite = favorites_match.group(1).strip() if commentary_match else ""
+    new_favorites = favorite.split("|")
 
-    if problem_match:
-        raw_problem = problem_match.group(1).strip()
-        problem_list = raw_problem.split("|")  # <#problemsubject|difficulty|typeofproblem#>
+    if favorites_match:
+        new_fav = search_entities(new_favorites[0], new_favorites[1], 2)[0]
+        favorites.append(new_fav)
+        second_elements = [t[1] for t in favorites]
+        possible_fav = find_entities(new_favorites[0], second_elements, 1990, 2025, 2)[0]
 
-        # Ensure we have at least 4 items in the list, filling in blanks if needed
-        while len(problem_list) < 4:
-            problem_list.append("")
-
-        # Strip each one and default to "" if it's None or empty
-        safe_problem_list = [(p or "").strip() for p in problem_list[:4]]
-
-        # Call the function safely
-        problem = generate_problem(
-            safe_problem_list[0],  # subject
-            safe_problem_list[2],  # type of problem
-            user_favorites,        # likes
-            safe_problem_list[1],  # difficulty (or whatever you intended here)
-            safe_problem_list[3]   # optional 4th element
-        )
+        win_reply = {"role": "system", "content": f"awesome! now remember to ask him if he likes {possible_fav} after next problem"}
+        conversations[user_name].append(win_reply)
 
 
+    if "<WIN>" in reply_content:
+        win_reply = {"role": "system", "content": "awesome! now remember to congradulate the student and talk to him about things he likes before moving on"}
+        conversations[user_name].append(win_reply)
 
-    # Append the reply to conversations
-    conversations[key].append(reply)
-    if problem != {}:
-
-        system_reply = {
-            "role": "system",
-            "content": f"Here's the problem generated {problem['problem']} with answer: {problem['answer']}!"
-        }
-
-        conversations[key].append(system_reply)
 
     commentary_match = re.search(r'<@(.+?)@>', reply_content, re.DOTALL)
     commentary = commentary_match.group(1).strip() if commentary_match else ""
-
     
-    reply_json = { "commentary": commentary, "clear": clear, "problem": problem, "whiteboard": problem.get("whiteboard", [])}
+    
+    reply_json = { "commentary": commentary, "clear": clear, "whiteboard": whiteboard} #"problem": problem, }
 
     return jsonify({"response": reply_json, "response_raw": reply_content})
 
@@ -446,14 +452,14 @@ def create_character():
         user_name = data.get("userID")
         user_age = data.get("age")
         user_sex = data.get("sex")
-        favorites = data.get("favorites")
+        user_favorites = data.get("favorites")
 
         key = user_name
         if key in conversations:
             del conversations[key]
 
         raw_instruction = f'''
-                    a kid named {user_name} {user_sex} aged {user_age} likes {favorites}, 
+                    a kid named {user_name} {user_sex} aged {user_age} likes {user_favorites}, 
                     create his tutor from these materials (remember only one of each) 
                     body: bluebody.GIF, greenbody.GIF, whitebody.GIF, pinkbody.GIF 
                     hat: piratehat.PNG, knighthat.PNG, spacehelmet.PNG, wizardhat.PNG, animalhat.PNG, headphones.PNG, alienantenna.PNG
@@ -515,6 +521,7 @@ def create_character():
         return jsonify({"response": result, "response_raw": reply_content})
 
     except Exception as e:
+        print("error", str(e))
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 

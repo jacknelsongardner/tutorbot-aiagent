@@ -101,8 +101,6 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
     setLoading(true);
     const userID = 'jack'; // hardcoded or pulled from context/auth
 
-    
-
     const response = await sendMessage(userID, sendText);
     setChatResponse(response);
 
@@ -127,10 +125,7 @@ const [whiteboardContent, setWhiteboardContent] = useState([]);
 const handleWhiteboardUpdate = async (content) => {
 
     for (const element of content) {
-
-
         if (element.type === 'text') {
-
             console.log("drawing text", element);
             addText(element.content, element.position[0]*3, element.position[1]*3);
         }
@@ -237,7 +232,7 @@ return (
             </div>
 
             <button onClick={clearUserBoard}>Clear Whiteboard</button>
-            <button onClick={() => setPage('login')}>Logout</button>
+            <button onClick={() => setPage('login')}>Start Over</button>
         </div>
         <div className="drawing-container">
             <div className="whiteboard-wrapper">
@@ -249,8 +244,8 @@ return (
                 )}
                 
                 <Stage
-                    width={window.innerWidth * 0.4}
-                    height={window.innerHeight}
+                    width={window.innerWidth * 0.8}
+                    height={window.innerHeight * .5}
                     onMouseDown={handleMouseDown}
                     onMousemove={handleMouseMove}
                     onMouseup={handleMouseUp}
@@ -281,8 +276,8 @@ return (
                 <div className="whiteboard-label">User Whiteboard</div>
                 <Stage
                     ref={userWhiteboardRef}
-                    width={window.innerWidth * 0.4}
-                    height={window.innerHeight}
+                    width={window.innerWidth * 0.8}
+                    height={window.innerHeight * .5}
                     onMouseDown={handleMouseDown}
                     onMousemove={handleMouseMove}
                     onMouseup={handleMouseUp}

@@ -50,7 +50,7 @@ function Generate() {
 
         setTimeout(() => {
           setTransitionDone(true);
-          setTimeout(() => setPage("whiteboard"), 3000);
+          setTimeout(() => setPage("whiteboard"), 4000);
         }, 500);
       } catch (err) {
         console.error("Character generation failed", err);
